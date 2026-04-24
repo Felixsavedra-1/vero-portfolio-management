@@ -7,7 +7,7 @@ Usage:
 
 import logging
 from datetime import date, datetime
-from typing import Dict, FrozenSet, Optional
+from typing import Dict, FrozenSet, List, Optional
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -68,8 +68,8 @@ class MorningBrief:
         risk_free_rate: float = RISK_FREE_RATE,
         watchlist: Optional[Dict[str, str]] = None,
         mutual_funds: Optional[FrozenSet[str]] = None,
-        savings: Optional[list] = None,
-        transactions: Optional[list] = None,
+        savings: Optional[List[SavingsAccount]] = None,
+        transactions: Optional[List[Transaction]] = None,
     ) -> None:
         self.holdings       = holdings
         self.indices        = indices

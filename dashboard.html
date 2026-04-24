@@ -27,6 +27,26 @@ html, body {
   font-family: var(--font);
 }
 
+/* ── Neo-grid overlay ───────────────────────────────────────────────────── */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(rgba(255,200,100,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,200,100,0.012) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Scanlines ──────────────────────────────────────────────────────────── */
+body::after {
+  content: ''; position: fixed; inset: 0;
+  pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg, transparent 0, transparent 3px,
+    rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+  );
+}
+
 /* ── Header ─────────────────────────────────────────────────────────────── */
 #header {
   position: sticky; top: 0; z-index: 100;
@@ -34,14 +54,26 @@ html, body {
   padding: 13px 28px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 20px rgba(255,128,3,0.06);
   font-size: 14px;
 }
 
+@keyframes akira-glitch {
+  0%, 88%, 100% { transform: translateX(0); text-shadow: none; clip-path: none; }
+  89%  { transform: translateX(-3px);
+         clip-path: polygon(0 15%, 100% 15%, 100% 38%, 0 38%);
+         text-shadow: 3px 0 var(--gold); }
+  90%  { transform: translateX(3px);
+         clip-path: polygon(0 55%, 100% 55%, 100% 78%, 0 78%);
+         text-shadow: -3px 0 var(--orange); }
+  91%  { transform: translateX(0); clip-path: none; text-shadow: none; }
+}
+
 #header-title {
-  position: fixed; left: 50%; transform: translateX(-50%);
   font-size: 16px; font-weight: bold;
   letter-spacing: 0.20em; color: var(--tan);
   pointer-events: none;
+  animation: akira-glitch 5s ease-in-out infinite;
 }
 
 #header-gain {
@@ -96,6 +128,7 @@ html, body {
   background: var(--bg);
   padding: 32px 32px 40px;
   display: flex; flex-direction: column; gap: 28px;
+  box-shadow: inset 0 0 28px rgba(255,128,3,0.03);
 }
 .panel--full { grid-column: 1 / -1; }
 
@@ -111,7 +144,7 @@ html, body {
   letter-spacing: 0.04em; font-weight: bold;
 }
 
-/* ── Doughnut chart ─────────────────────────────────────────────────────── */
+/* ── 3D chart container ─────────────────────────────────────────────────── */
 .chart-container {
   position: relative;
   width: 100%; max-width: 300px;
@@ -151,14 +184,9 @@ html, body {
 }
 .progress-fill::after {
   content: '';
-  position: absolute;
-  top: 0; bottom: 0;
-  left: -55%;
-  width: 55%;
+  position: absolute; top: 0; bottom: 0; left: -55%; width: 55%;
   background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.45) 50%,
-    transparent 100%
+    transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%
   );
   animation: akira-shimmer 2.4s 2.3s ease-in-out infinite;
 }
@@ -176,70 +204,47 @@ html, body {
 
 .goal-hint {
   font-size: 12px; color: var(--dim);
-  letter-spacing: 0.04em; line-height: 1.6;
-  padding: 2px 0;
+  letter-spacing: 0.04em; line-height: 1.6; padding: 2px 0;
 }
 
 /* ── Data table ─────────────────────────────────────────────────────────── */
 .table-label {
   font-size: 12px; letter-spacing: 0.22em;
-  color: var(--dim); text-transform: uppercase;
-  margin-bottom: 12px;
+  color: var(--dim); text-transform: uppercase; margin-bottom: 12px;
 }
 
 .data-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 8px 0; border-bottom: 1px solid var(--border);
   font-size: 14px; gap: 8px;
 }
 .data-row:last-child { border-bottom: none; }
 
-.dr-left {
-  color: var(--tan); min-width: 72px;
-  letter-spacing: 0.06em; font-size: 14px;
-}
-.dr-mid {
-  color: var(--dim); flex: 1;
-  font-size: 13px; overflow: hidden;
-  white-space: nowrap; text-overflow: ellipsis;
-}
-.dr-right {
-  text-align: right; min-width: 80px;
-  font-size: 14px; color: var(--tan);
-}
-.dr-sub {
-  display: block; font-size: 12px;
-  color: var(--dim); margin-top: 1px;
-}
+.dr-left  { color: var(--tan); min-width: 72px; letter-spacing: 0.06em; font-size: 14px; }
+.dr-mid   { color: var(--dim); flex: 1; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.dr-right { text-align: right; min-width: 80px; font-size: 14px; color: var(--tan); }
+.dr-sub   { display: block; font-size: 12px; color: var(--dim); margin-top: 1px; }
 .dr-sub.pos { color: var(--tan); }
 .dr-sub.neg { color: var(--neg); }
 
 /* ── Holding metrics bar ────────────────────────────────────────────────── */
 .holding-metrics {
   display: flex; gap: 18px; flex-wrap: wrap;
-  padding: 2px 0 10px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 2px 0 10px 0; border-bottom: 1px solid var(--border);
   font-size: 12px; letter-spacing: 0.04em;
 }
 .holding-metrics:last-child { border-bottom: none; }
-.hm-seg { display: flex; align-items: baseline; gap: 5px; }
+.hm-seg   { display: flex; align-items: baseline; gap: 5px; }
 .hm-label { font-size: 11px; color: var(--dim); letter-spacing: 0.10em; text-transform: uppercase; }
 .hm-val   { color: var(--tan); }
 .hm-pos   { color: var(--tan); }
 .hm-neg   { color: var(--neg); }
 
 /* ── Watchlist ──────────────────────────────────────────────────────────── */
-.wl-tf-bar {
-  display: flex; gap: 5px; align-items: center;
-  margin-left: auto;
-}
+.wl-tf-bar { display: flex; gap: 5px; align-items: center; margin-left: auto; }
 .wl-tf {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--dim);
-  font-family: var(--font);
-  font-size: 12px; letter-spacing: 0.12em;
+  background: none; border: 1px solid var(--border); color: var(--dim);
+  font-family: var(--font); font-size: 12px; letter-spacing: 0.12em;
   padding: 3px 9px; cursor: pointer; border-radius: 2px;
   transition: color 0.15s, border-color 0.15s;
 }
@@ -249,9 +254,7 @@ html, body {
 .wl-row {
   display: grid;
   grid-template-columns: minmax(120px, 1.4fr) 110px 190px 1fr 220px;
-  align-items: center;
-  gap: 20px;
-  padding: 13px 0;
+  align-items: center; gap: 20px; padding: 13px 0;
   border-bottom: 1px solid var(--border);
 }
 .wl-row:last-child { border-bottom: none; }
@@ -260,18 +263,69 @@ html, body {
 .wl-tick  { font-size: 12px; color: var(--dim); letter-spacing: 0.10em; margin-top: 3px; }
 .wl-price { font-size: 16px; color: var(--tan); letter-spacing: 0.04em; font-weight: bold; }
 
-.wl-signal          { font-size: 13px; letter-spacing: 0.10em; }
-.wl-signal.BULLISH  { color: #00d56f; }
-.wl-signal.BEARISH  { color: #d71200; }
-.wl-signal.NEUTRAL  { color: var(--orange); }
-.wl-reason { font-size: 12px; color: var(--dim); letter-spacing: 0.06em; margin-top: 3px; }
+.wl-signal         { font-size: 13px; letter-spacing: 0.10em; }
+.wl-signal.BULLISH { color: #00d56f; }
+.wl-signal.BEARISH { color: #d71200; }
+.wl-signal.NEUTRAL { color: var(--orange); }
+.wl-reason  { font-size: 12px; color: var(--dim); letter-spacing: 0.06em; margin-top: 3px; }
+.wl-sparkline  { display: block; width: 220px; height: 48px; }
+.hm-sparkline  { display: block; margin-left: auto; opacity: 0.82; }
 
-.wl-sparkline { display: block; width: 220px; height: 48px; }
-
-.wl-empty {
-  font-size: 13px; color: var(--dim); letter-spacing: 0.10em;
-  padding: 28px 0; text-align: center;
+#analysis-content img {
+  width: 100%; display: block;
+  border-radius: 2px; opacity: 0.92;
 }
+.wl-empty { font-size: 13px; color: var(--dim); letter-spacing: 0.10em; padding: 28px 0; text-align: center; }
+
+/* ── Watchlist tooltip ──────────────────────────────────────────────────── */
+#wl-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #0d0b09;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  box-shadow: 0 0 14px rgba(255,128,3,0.18);
+  z-index: 500;
+  max-width: 320px;
+  line-height: 1.55;
+  display: none;
+}
+#wl-tooltip .tt-sector {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+#wl-tooltip .tt-desc { color: var(--dim); }
+.wl-name { cursor: pointer; }
+.wl-name.active-analysis { color: var(--orange); }
+
+/* ── Analysis panel content ─────────────────────────────────────────────── */
+.an-empty  { font-size: 13px; color: var(--dim); letter-spacing: 0.10em; padding: 28px 0; text-align: center; }
+.an-header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+.an-ticker { font-size: 22px; color: var(--tan); letter-spacing: 0.12em; font-weight: bold; }
+.an-label  { font-size: 14px; color: var(--text); letter-spacing: 0.06em; }
+.an-sector { font-size: 11px; color: var(--gold); letter-spacing: 0.16em; text-transform: uppercase; margin-left: auto; }
+.an-tf-bar { display: flex; gap: 5px; }
+#an-chart-wrap { position: relative; width: 100%; height: 140px; margin-bottom: 28px; }
+#an-chart      { display: block; }
+.an-metrics { display: flex; flex-wrap: wrap; border: 1px solid var(--border); margin-bottom: 2px; }
+.an-metric  { flex: 1; min-width: 80px; padding: 13px 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
+.an-metric:last-child { border-right: none; }
+.an-m-label { font-size: 11px; color: var(--dim); letter-spacing: 0.16em; text-transform: uppercase; }
+.an-m-val   { font-size: 15px; letter-spacing: 0.04em; }
+.an-m-pos   { color: var(--tan); }
+.an-m-neg   { color: var(--neg); }
+.an-m-neu   { color: var(--dim); }
+.an-desc    { font-size: 13px; color: var(--dim); letter-spacing: 0.04em; line-height: 1.65; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 22px; }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 3px; }
@@ -289,10 +343,12 @@ html, body {
 </style>
 </head>
 <body>
+<div id="wl-tooltip"><div class="tt-sector" id="tt-sector"></div><div class="tt-desc" id="tt-desc"></div></div>
 <div id="app">
 
   <header id="header">
     <span id="header-brand">vedra &amp; co</span>
+    <span style="color:var(--orange)">|</span>
     <span id="header-title"></span>
     <span id="header-gain"></span>
     <div id="header-status">
@@ -311,11 +367,8 @@ html, body {
         <span class="panel-label">SAVINGS</span>
         <span class="panel-value" id="val-savings">—</span>
       </div>
-      <div class="chart-container">
-        <canvas id="chart-savings"
-                role="img"
-                aria-label="Savings accounts breakdown by balance"></canvas>
-      </div>
+      <div class="chart-container" id="chart-savings"
+           role="img" aria-label="Savings accounts breakdown by balance"></div>
       <div id="prog-savings"></div>
       <div>
         <div class="table-label">ACCOUNTS</div>
@@ -329,16 +382,23 @@ html, body {
         <span class="panel-label">PORTFOLIO</span>
         <span class="panel-value" id="val-portfolio">—</span>
       </div>
-      <div class="chart-container">
-        <canvas id="chart-portfolio"
-                role="img"
-                aria-label="Portfolio holdings breakdown by value"></canvas>
-      </div>
+      <div class="chart-container" id="chart-portfolio"
+           role="img" aria-label="Portfolio holdings breakdown by value"></div>
       <div id="prog-portfolio"></div>
       <div>
         <div class="table-label">HOLDINGS</div>
         <div id="holdings-list"></div>
       </div>
+    </section>
+
+    <!-- Analysis panel (full width) -->
+    <section class="panel panel--full" id="analysis-panel">
+      <div class="panel-header">
+        <span class="panel-label">DEEP ANALYSIS</span>
+        <span id="analysis-hint"
+              style="font-size:11px;letter-spacing:0.12em;color:var(--dim)"></span>
+      </div>
+      <div id="analysis-content"></div>
     </section>
 
     <!-- Watchlist panel (full width) -->
@@ -359,8 +419,8 @@ html, body {
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
-        integrity="sha256-s4B2di9zY7yekStouOA0gmeY213ya7YfAA7C56MTe8c="
+<!-- three@0.150.0 — last npm release with the UMD build included -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"
         crossorigin="anonymous"></script>
 
 <script>
@@ -379,42 +439,26 @@ const SLICE_COLORS = [
   '#6b4c2a', '#e8c870', '#8B6914',
 ];
 
-// ── CSS variable reader ─────────────────────────────────────────────────────
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-// ── Formatters ──────────────────────────────────────────────────────────────
 function fmt$(v) {
-  return '$' + (+v || 0).toLocaleString('en-US', {
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
-  });
+  return '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 function fmtPct(v) {
   return (v >= 0 ? '+' : '') + (+v || 0).toFixed(2) + '%';
 }
 function fmtPrice(v) {
-  return '$' + (+v || 0).toLocaleString('en-US', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  });
+  return '$' + (+v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function fmtSigned$(v) {
   const n = +v || 0;
-  return (n >= 0 ? '+$' : '-$') + Math.abs(n).toLocaleString('en-US', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2,
-  });
+  return (n >= 0 ? '+$' : '-$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// ── HTML escaping ───────────────────────────────────────────────────────────
 function escapeHTML(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ── Typewriter ──────────────────────────────────────────────────────────────
 function typeWriter(el, text, msPer, cb) {
   if (REDUCED) { el.textContent = text; cb && cb(); return; }
   let i = 0;
@@ -424,74 +468,223 @@ function typeWriter(el, text, msPer, cb) {
   }, msPer);
 }
 
-// ── Doughnut chart ──────────────────────────────────────────────────────────
-function buildDoughnut(canvasId, labels, values) {
-  const canvasCtx = document.getElementById(canvasId).getContext('2d');
-  const total     = values.reduce((a, b) => a + b, 0);
-  const colors    = SLICE_COLORS.slice(0, Math.max(values.length, 1));
+// ── Three.js 3D ring chart ──────────────────────────────────────────────────
+function build3DRing(containerId, labels, values) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
 
-  return new Chart(canvasCtx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data:             values,
-        backgroundColor:  colors,
-        borderColor:      cssVar('--bg'),
-        borderWidth:      2,
-        hoverBorderWidth: 3,
-        hoverBorderColor: cssVar('--tan'),
-      }],
-    },
-    options: {
-      cutout: '62%',
-      animation: REDUCED ? false : { duration: 1200, easing: 'easeOutQuart' },
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color:     cssVar('--dim'),
-            font:      { family: 'Courier New', size: 13 },
-            padding:   16,
-            boxWidth:  10,
-            boxHeight: 10,
-          },
-        },
-        tooltip: {
-          backgroundColor: '#111111',
-          borderColor:     cssVar('--border'),
-          borderWidth:     1,
-          titleColor:      cssVar('--tan'),
-          bodyColor:       cssVar('--text'),
-          titleFont:       { family: 'Courier New', size: 14 },
-          bodyFont:        { family: 'Courier New', size: 13 },
-          padding:         10,
-          callbacks: {
-            label(tooltipCtx) {
-              const pct = total > 0 ? (tooltipCtx.raw / total * 100).toFixed(1) : '0.0';
-              return `  ${fmt$(tooltipCtx.raw)}  (${pct}%)`;
-            },
-          },
-        },
-      },
-    },
+  if (!window.THREE) {
+    container.innerHTML = '<p style="color:var(--dim);font-size:13px;text-align:center;padding-top:40%">3D unavailable</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  const W = container.clientWidth  || 280;
+  const H = container.clientHeight || W;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, W / H, 0.1, 100);
+  camera.position.set(0, 2.2, 5);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  container.appendChild(renderer.domElement);
+
+  const OUTER_R = 1.4, INNER_R = 0.72, DEPTH = 0.28;
+  const MID_R   = (OUTER_R + INNER_R) / 2;
+  const total   = values.reduce((a, b) => a + b, 0) || 1;
+  const group   = new THREE.Group();
+  const meshes  = [];
+  let   ang0    = 0;
+
+  values.forEach((val, i) => {
+    if (val <= 0) return;
+    const sliceAng = Math.min((val / total) * Math.PI * 2, Math.PI * 2 - 0.001);
+    const hexColor = SLICE_COLORS[i % SLICE_COLORS.length];
+    const color    = new THREE.Color(hexColor);
+
+    const shape = new THREE.Shape();
+    shape.absarc(0, 0, OUTER_R, ang0, ang0 + sliceAng, false);
+    shape.absarc(0, 0, INNER_R, ang0 + sliceAng, ang0, true);
+    shape.closePath();
+
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: DEPTH, bevelEnabled: false });
+    const mat = new THREE.MeshStandardMaterial({
+      color, emissive: color, emissiveIntensity: 0.3,
+      metalness: 0.7, roughness: 0.4,
+    });
+
+    const mesh    = new THREE.Mesh(geo, mat);
+    mesh.userData = { label: labels[i] || '—', value: val, midAngle: ang0 + sliceAng / 2, hexColor };
+    group.add(mesh);
+    meshes.push(mesh);
+    ang0 += sliceAng;
   });
+
+  group.position.z = -DEPTH / 2;
+  scene.add(group);
+
+  // Static ambient lighting
+  scene.add(new THREE.AmbientLight(0x0d0a06, 3));
+  const wL = new THREE.PointLight(0xFF8003, 2.5, 20);
+  wL.position.set(3, 4, 4);
+  scene.add(wL);
+  const gL = new THREE.PointLight(0xd4956a, 1.0, 20);
+  gL.position.set(-2, -2, 3);
+  scene.add(gL);
+  const fL = new THREE.DirectionalLight(0xffeedd, 0.35);
+  fL.position.set(0, 5, 5);
+  scene.add(fL);
+
+  // Dynamic hover light — follows the hovered slice as the ring rotates
+  const hoverLight = new THREE.PointLight(0xFF8003, 0, 8);
+  scene.add(hoverLight);
+
+  // ── Particle system ───────────────────────────────────────────────────────
+  const PCOUNT = 55;
+  const pPos   = new Float32Array(PCOUNT * 3);
+  const pVel   = Array.from({ length: PCOUNT }, () => new THREE.Vector3());
+  const pLife  = new Float32Array(PCOUNT); // remaining life in seconds
+
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+
+  const pMat = new THREE.PointsMaterial({
+    color: 0xFF8003, size: 0.06,
+    transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+  });
+  const ps = new THREE.Points(pGeo, pMat);
+  scene.add(ps);
+
+  // Park all particles off-screen until first spawn
+  for (let i = 0; i < PCOUNT; i++) { pPos[i*3] = pPos[i*3+1] = pPos[i*3+2] = 999; }
+
+  // World-space center of a slice, updated each frame as the ring rotates
+  function sliceWorldPos(mesh) {
+    const v = new THREE.Vector3(
+      Math.cos(mesh.userData.midAngle) * MID_R,
+      Math.sin(mesh.userData.midAngle) * MID_R,
+      DEPTH / 2,
+    );
+    group.localToWorld(v);
+    return v;
+  }
+
+  function spawnParticle(i, origin) {
+    pPos[i*3]   = origin.x + (Math.random() - 0.5) * 0.28;
+    pPos[i*3+1] = origin.y + (Math.random() - 0.5) * 0.28;
+    pPos[i*3+2] = origin.z + (Math.random() - 0.5) * 0.12;
+    const spd = 0.009 + Math.random() * 0.013;
+    const a   = Math.random() * Math.PI * 2;
+    pVel[i].set(
+      Math.cos(a) * spd * 0.7,
+      Math.sin(a) * spd * 0.5 + 0.005,   // slight upward drift
+      (Math.random() - 0.5) * spd * 0.4,
+    );
+    pLife[i] = 0.5 + Math.random() * 0.5;
+  }
+
+  // ── Hover state ───────────────────────────────────────────────────────────
+  let hoverTarget   = null;
+  let particleAlpha = 0;
+
+  // ── Tooltip ───────────────────────────────────────────────────────────────
+  const tip = document.createElement('div');
+  tip.style.cssText = "position:absolute;pointer-events:none;background:#0d0b09;" +
+    "border:1px solid #1a1a1a;color:#b8b8b8;font-family:'Courier New',monospace;" +
+    "font-size:12px;letter-spacing:0.08em;padding:7px 12px;border-radius:2px;" +
+    "opacity:0;transition:opacity 0.15s;box-shadow:0 0 10px rgba(255,128,3,0.25);" +
+    "z-index:10;white-space:nowrap;";
+  container.appendChild(tip);
+
+  const ray   = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  renderer.domElement.addEventListener('mousemove', e => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+    mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+    ray.setFromCamera(mouse, camera);
+    const hits = ray.intersectObjects(meshes);
+    if (hits.length) {
+      const ud  = hits[0].object.userData;
+      const pct = (ud.value / total * 100).toFixed(1);
+      tip.innerHTML     = `${escapeHTML(ud.label)}<br>${fmt$(ud.value)}&nbsp;(${pct}%)`;
+      tip.style.opacity = '1';
+      tip.style.left    = (e.clientX - rect.left + 14) + 'px';
+      tip.style.top     = (e.clientY - rect.top  +  8) + 'px';
+      hoverTarget = hits[0].object;
+    } else {
+      tip.style.opacity = '0';
+      hoverTarget = null;
+    }
+  });
+  renderer.domElement.addEventListener('mouseleave', () => {
+    tip.style.opacity = '0';
+    hoverTarget = null;
+  });
+
+  // ── Animation loop ────────────────────────────────────────────────────────
+  (function loop() {
+    requestAnimationFrame(loop);
+    if (!REDUCED) group.rotation.y += 0.004;
+
+    // Animate per-slice emissive glow + radial pop
+    meshes.forEach(m => {
+      const on  = m === hoverTarget;
+      m.material.emissiveIntensity += ((on ? 0.75 : 0.3)  - m.material.emissiveIntensity) * 0.12;
+      m.position.x += ((on ? Math.cos(m.userData.midAngle) * 0.1 : 0) - m.position.x) * 0.12;
+      m.position.y += ((on ? Math.sin(m.userData.midAngle) * 0.1 : 0) - m.position.y) * 0.12;
+    });
+
+    // Hover light tracks the rotating slice in world space
+    if (hoverTarget) {
+      const lv = sliceWorldPos(hoverTarget);
+      lv.z += 0.5;
+      hoverLight.position.lerp(lv, 0.15);
+      hoverLight.color.set(hoverTarget.userData.hexColor);
+      hoverLight.intensity += (3.0 - hoverLight.intensity) * 0.12;
+    } else {
+      hoverLight.intensity += (0 - hoverLight.intensity) * 0.12;
+    }
+
+    // Particle fade-in/out + continuous spawn + drift
+    particleAlpha    += ((hoverTarget ? 1 : 0) - particleAlpha) * 0.1;
+    pMat.opacity      = particleAlpha * 0.88;
+    const origin      = hoverTarget ? sliceWorldPos(hoverTarget) : null;
+    for (let i = 0; i < PCOUNT; i++) {
+      pLife[i] -= 0.016;
+      if (pLife[i] <= 0) {
+        if (origin) spawnParticle(i, origin);
+        else { pPos[i*3] = pPos[i*3+1] = pPos[i*3+2] = 999; }
+      } else {
+        pPos[i*3]   += pVel[i].x;
+        pPos[i*3+1] += pVel[i].y;
+        pPos[i*3+2] += pVel[i].z;
+        pVel[i].multiplyScalar(0.97); // drag
+      }
+    }
+    pGeo.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  })();
 }
 
 // ── Progress bar ────────────────────────────────────────────────────────────
 function renderProgressBar(containerId, current, goal, type) {
   const el = document.getElementById(containerId);
   if (!el) return;
-
   if (!goal) {
-    el.innerHTML = `<p class="goal-hint">No goal set &mdash; run:&nbsp;
-      <span style="color:var(--text)">portfolio goal set ${type} AMOUNT</span></p>`;
+    el.innerHTML = `<p class="goal-hint">No goal set &mdash; run:&nbsp;<span style="color:var(--text)">portfolio goal set ${type} AMOUNT</span></p>`;
     return;
   }
-
   const pct    = Math.min(current / goal * 100, 100);
   const pctStr = pct.toFixed(1) + '%';
-
   el.innerHTML = `
     <div class="progress-wrap">
       <div class="progress-meta">
@@ -517,13 +710,13 @@ function renderHoldings() {
     return;
   }
   el.innerHTML = holdings.map((h, i) => {
-    const CORP_SUFFIXES = /\s+(Company|Corporation|Corp\.?|Inc\.?|Ltd\.?|LLC|L\.L\.C\.|PLC|N\.A\.|Incorporated|Limited)$/i;
-    const shortLabel = h.label ? h.label.replace(CORP_SUFFIXES, '').trim() : '';
-    const gainCls   = h.gain_pct > 0 ? 'pos' : h.gain_pct < 0 ? 'neg' : '';
-    const gainArrow = h.gain_pct > 0 ? '▲' : h.gain_pct < 0 ? '▼' : '—';
-    const dayCls    = h.day_change_pct > 0 ? 'hm-pos' : h.day_change_pct < 0 ? 'hm-neg' : 'hm-val';
-    const gainHmCls = h.gain_dollar > 0 ? 'hm-pos' : h.gain_dollar < 0 ? 'hm-neg' : 'hm-val';
-    const color     = SLICE_COLORS[i % SLICE_COLORS.length];
+    const CORP = /\s+(Company|Corporation|Corp\.?|Inc\.?|Ltd\.?|LLC|L\.L\.C\.|PLC|N\.A\.|Incorporated|Limited)$/i;
+    const shortLabel = h.label ? h.label.replace(CORP, '').trim() : '';
+    const gainCls    = h.gain_pct > 0 ? 'pos' : h.gain_pct < 0 ? 'neg' : '';
+    const gainArrow  = h.gain_pct > 0 ? '▲'  : h.gain_pct < 0 ? '▼'  : '—';
+    const dayCls     = h.day_change_pct > 0 ? 'hm-pos' : h.day_change_pct < 0 ? 'hm-neg' : 'hm-val';
+    const gainHmCls  = h.gain_dollar > 0    ? 'hm-pos' : h.gain_dollar < 0    ? 'hm-neg' : 'hm-val';
+    const color      = SLICE_COLORS[i % SLICE_COLORS.length];
     return `
       <div class="data-row" style="border-bottom:none;padding-bottom:6px">
         <span class="dr-left" style="color:${color}">${escapeHTML(h.ticker)}<span class="dr-sub">${fmtPrice(h.price)}</span></span>
@@ -536,6 +729,7 @@ function renderHoldings() {
       <div class="holding-metrics">
         <div class="hm-seg"><span class="hm-label">Today</span><span class="${dayCls}">${fmtSigned$(h.day_change_dollar)} (${fmtPct(h.day_change_pct)})</span></div>
         <div class="hm-seg"><span class="hm-label">P&amp;L</span><span class="${gainHmCls}">${fmtSigned$(h.gain_dollar)}</span></div>
+        <canvas class="hm-sparkline" id="h-spark-${i}" width="90" height="28"></canvas>
       </div>`;
   }).join('');
 }
@@ -550,7 +744,7 @@ function renderSavings() {
   }
   const pd = T.payment_day;
   el.innerHTML = savings.map((s, i) => {
-    const color = SLICE_COLORS[i % SLICE_COLORS.length];
+    const color      = SLICE_COLORS[i % SLICE_COLORS.length];
     const metricsBar = (pd && s.accrued != null) ? `
     <div class="holding-metrics">
       <div class="hm-seg"><span class="hm-label">Daily</span><span class="hm-pos">+${fmtPrice(s.daily_earn)}/d</span></div>
@@ -575,10 +769,7 @@ function scheduleFlicker(el) {
   const delay = 4000 + Math.random() * 5000;
   setTimeout(() => {
     el.style.opacity = '0.3';
-    setTimeout(() => {
-      el.style.opacity = '';
-      scheduleFlicker(el);
-    }, 55);
+    setTimeout(() => { el.style.opacity = ''; scheduleFlicker(el); }, 55);
   }, delay);
 }
 
@@ -601,9 +792,9 @@ function renderHeader() {
   const stalenessEl = document.getElementById('header-staleness');
   const updateStaleness = () => {
     if (!generatedMs) { stalenessEl.textContent = ''; return; }
-    const mins = Math.floor((Date.now() - generatedMs) / 60000);
-    const label = mins < 1   ? 'data: just now'
-                : mins < 60  ? `data: ${mins}m ago`
+    const mins  = Math.floor((Date.now() - generatedMs) / 60000);
+    const label = mins < 1  ? 'data: just now'
+                : mins < 60 ? `data: ${mins}m ago`
                 : `data: ${Math.floor(mins / 60)}h ${mins % 60}m ago`;
     stalenessEl.textContent = label;
     stalenessEl.className   = mins >= 60 ? 'old' : mins >= 15 ? 'stale' : '';
@@ -619,39 +810,27 @@ function renderHeader() {
   setInterval(tickTime, 60000);
 }
 
-// ── Sparklines (Akira-style) ─────────────────────────────────────────────────
-
+// ── Sparklines ───────────────────────────────────────────────────────────────
 const WL_W = 220, WL_H = 48;
 
-function drawSparkline(canvas, prices) {
+function drawSparkline(canvas, prices, w, h) {
+  const W   = w || WL_W, H = h || WL_H;
   const dpr = window.devicePixelRatio || 1;
-  canvas.width  = WL_W * dpr;
-  canvas.height = WL_H * dpr;
-  canvas.style.width  = WL_W + 'px';
-  canvas.style.height = WL_H + 'px';
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const W = WL_W, H = WL_H;
-
   if (!prices || prices.length < 2) {
-    ctx.strokeStyle = 'rgba(104,104,104,0.25)';
-    ctx.lineWidth   = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, H / 2);
-    ctx.lineTo(W, H / 2);
-    ctx.stroke();
+    ctx.strokeStyle = 'rgba(104,104,104,0.25)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
     return;
   }
 
-  const n   = prices.length;
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const rng = max - min || 1;
-  const PAD = 5;
-
-  function xp(i) { return (i / (n - 1)) * W; }
-  function yp(v) { return H - PAD - ((v - min) / rng) * (H - PAD * 2); }
+  const n = prices.length, PAD = 5;
+  const min = Math.min(...prices), max = Math.max(...prices), rng = max - min || 1;
+  const xp  = i => (i / (n - 1)) * W;
+  const yp  = v => H - PAD - ((v - min) / rng) * (H - PAD * 2);
 
   function makeGrads() {
     const lg = ctx.createLinearGradient(0, 0, W, 0);
@@ -659,11 +838,9 @@ function drawSparkline(canvas, prices) {
     lg.addColorStop(0.28, '#c8b89a');
     lg.addColorStop(0.58, '#d4956a');
     lg.addColorStop(1,    '#FF8003');
-
     const fg = ctx.createLinearGradient(0, 0, 0, H);
     fg.addColorStop(0, 'rgba(255,128,3,0.18)');
     fg.addColorStop(1, 'rgba(255,128,3,0)');
-
     return { lg, fg };
   }
 
@@ -671,52 +848,39 @@ function drawSparkline(canvas, prices) {
     const { lg, fg } = makeGrads();
     const c = Math.max(2, count || n);
     ctx.clearRect(0, 0, W, H);
-
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(prices[0]));
     for (let i = 1; i < c; i++) ctx.lineTo(xp(i), yp(prices[i]));
-    ctx.lineTo(xp(c - 1), H);
-    ctx.lineTo(xp(0), H);
-    ctx.closePath();
-    ctx.fillStyle = fg;
-    ctx.fill();
-
+    ctx.lineTo(xp(c - 1), H); ctx.lineTo(xp(0), H); ctx.closePath();
+    ctx.fillStyle = fg; ctx.fill();
     ctx.save();
-    ctx.shadowBlur  = 7;
-    ctx.shadowColor = 'rgba(255,128,3,0.75)';
+    ctx.shadowBlur = 7; ctx.shadowColor = 'rgba(255,128,3,0.75)';
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(prices[0]));
     for (let i = 1; i < c; i++) ctx.lineTo(xp(i), yp(prices[i]));
-    ctx.strokeStyle = lg;
-    ctx.lineWidth   = 1.8;
-    ctx.lineJoin    = 'round';
-    ctx.lineCap     = 'round';
-    ctx.stroke();
-    ctx.restore();
+    ctx.strokeStyle = lg; ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.stroke(); ctx.restore();
   }
 
   if (REDUCED) { drawStatic(n); return; }
 
-  const t0  = performance.now();
-  const dur = 800;
-
+  const t0 = performance.now(), dur = 800;
   function drawFrame(now) {
-    const t     = Math.min((now - t0) / dur, 1);
-    const eased = 1 - Math.pow(1 - t, 3);
-    drawStatic(Math.max(2, Math.round(eased * n)));
+    const t = Math.min((now - t0) / dur, 1);
+    drawStatic(Math.max(2, Math.round((1 - Math.pow(1 - t, 3)) * n)));
     if (t < 1) { requestAnimationFrame(drawFrame); return; }
     drawStatic(n);
     const s0 = performance.now(), sd = 650;
     function shimmer(ts) {
-      const st  = Math.min((ts - s0) / sd, 1);
+      const st = Math.min((ts - s0) / sd, 1);
       drawStatic(n);
-      const sx  = (st * 1.6 - 0.3) * W;
-      const sg  = ctx.createLinearGradient(sx - W * 0.18, 0, sx + W * 0.18, 0);
-      sg.addColorStop(0,   'rgba(255,255,255,0)');
+      const sx = (st * 1.6 - 0.3) * W;
+      const sg = ctx.createLinearGradient(sx - W * 0.18, 0, sx + W * 0.18, 0);
+      sg.addColorStop(0, 'rgba(255,255,255,0)');
       sg.addColorStop(0.5, 'rgba(255,255,255,0.22)');
-      sg.addColorStop(1,   'rgba(255,255,255,0)');
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, 0, W, H);
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
       if (st < 1) requestAnimationFrame(shimmer);
     }
     requestAnimationFrame(shimmer);
@@ -725,33 +889,27 @@ function drawSparkline(canvas, prices) {
 }
 
 // ── Watchlist ────────────────────────────────────────────────────────────────
-
 let activeTF = '1W';
-
 const SIGNAL_ICON = { BULLISH: '▲', BEARISH: '▼', NEUTRAL: '~' };
 
 function drawAllSparklines() {
-  const watchlist = D.watchlist || [];
-  watchlist.forEach((w, i) => {
+  (D.watchlist || []).forEach((w, i) => {
     const canvas = document.getElementById(`wl-canvas-${i}`);
-    if (!canvas) return;
-    drawSparkline(canvas, (w.history || {})[activeTF] || []);
+    if (canvas) drawSparkline(canvas, (w.history || {})[activeTF] || []);
   });
 }
 
 function renderWatchlist() {
   const container = document.getElementById('watchlist-rows');
   const watchlist = D.watchlist || [];
-
   if (!watchlist.length) {
     container.innerHTML = `<div class="wl-empty">Add tickers to WATCHLIST in config.py to see live signals here.</div>`;
     return;
   }
-
   container.innerHTML = watchlist.map((w, i) => `
-    <div class="wl-row">
+    <div class="wl-row" data-ticker="${escapeHTML(w.ticker)}">
       <div>
-        <div class="wl-name">${escapeHTML(w.label)}</div>
+        <div class="wl-name" data-description="${escapeHTML(w.description || '')}" data-sector="${escapeHTML(w.sector || '')}">${escapeHTML(w.label)}</div>
         <div class="wl-tick">${escapeHTML(w.ticker)}</div>
       </div>
       <div class="wl-price">${fmtPrice(w.price)}</div>
@@ -763,8 +921,98 @@ function renderWatchlist() {
       <canvas class="wl-sparkline" id="wl-canvas-${i}"></canvas>
     </div>
   `).join('');
-
   drawAllSparklines();
+}
+
+// ── Analysis panel ──────────────────────────────────────────────────────────
+let activeAnalysisTicker = null;
+let activeAnalysisTF     = 'YTD';
+
+function _pctRet(prices) {
+  if (!prices || prices.length < 2 || prices[0] === 0) return null;
+  return (prices[prices.length - 1] - prices[0]) / prices[0] * 100;
+}
+function _annualVol(prices) {
+  if (!prices || prices.length < 3) return null;
+  const rets = [];
+  for (let i = 1; i < prices.length; i++) {
+    if (prices[i - 1] > 0) rets.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+  }
+  if (rets.length < 2) return null;
+  const mu = rets.reduce((a, b) => a + b, 0) / rets.length;
+  const v  = rets.reduce((a, r) => a + (r - mu) ** 2, 0) / (rets.length - 1);
+  return Math.sqrt(v * 252) * 100;
+}
+function _maxDD(prices) {
+  if (!prices || prices.length < 2) return null;
+  let peak = prices[0], mdd = 0;
+  for (const p of prices) {
+    if (p > peak) peak = p;
+    const dd = (p - peak) / peak * 100;
+    if (dd < mdd) mdd = dd;
+  }
+  return mdd;
+}
+
+function _drawAnalysisChart(prices) {
+  requestAnimationFrame(() => {
+    const wrap = document.getElementById('an-chart-wrap');
+    const c    = document.getElementById('an-chart');
+    if (!wrap || !c) return;
+    drawSparkline(c, prices, wrap.clientWidth || 800, wrap.clientHeight || 140);
+  });
+}
+
+function renderAnalysisPanel(w) {
+  const h        = w.history || {};
+  const TFS      = ['1W', '1M', '3M', '6M', 'YTD'];
+  const longHist = (h.YTD && h.YTD.length > 5) ? h.YTD : ((h['6M'] && h['6M'].length > 5) ? h['6M'] : []);
+
+  const METRICS = [
+    { label: '1W',  val: _pctRet(h['1W']  || []) },
+    { label: '1M',  val: _pctRet(h['1M']  || []) },
+    { label: '3M',  val: _pctRet(h['3M']  || []) },
+    { label: '6M',  val: _pctRet(h['6M']  || []) },
+    { label: 'YTD', val: _pctRet(h.YTD    || []) },
+    { label: 'VOL', val: _annualVol(longHist), isVol: true },
+    { label: 'MDD', val: _maxDD(longHist),     isMdd: true },
+  ];
+
+  function metricHTML(m) {
+    let text, cls;
+    if (m.val === null || m.val === undefined || isNaN(m.val)) {
+      text = '—'; cls = 'an-m-neu';
+    } else if (m.isVol) {
+      text = m.val.toFixed(1) + '%'; cls = 'an-m-neu';
+    } else if (m.isMdd) {
+      text = m.val.toFixed(1) + '%'; cls = m.val < -5 ? 'an-m-neg' : 'an-m-neu';
+    } else {
+      text = (m.val >= 0 ? '+' : '') + m.val.toFixed(2) + '%';
+      cls  = m.val > 0.001 ? 'an-m-pos' : m.val < -0.001 ? 'an-m-neg' : 'an-m-neu';
+    }
+    return `<div class="an-metric"><span class="an-m-label">${m.label}</span><span class="an-m-val ${cls}">${text}</span></div>`;
+  }
+
+  document.getElementById('analysis-hint').textContent = '';
+  document.getElementById('analysis-content').innerHTML = `
+    <div class="an-header">
+      <span class="an-ticker">${escapeHTML(w.ticker)}</span>
+      <span class="an-label">${escapeHTML(w.label)}</span>
+      ${w.sector ? `<span class="an-sector">${escapeHTML(w.sector)}</span>` : ''}
+      <div class="an-tf-bar">${TFS.map(t => `<button class="wl-tf${t === activeAnalysisTF ? ' active' : ''}" data-an-tf="${t}">${t}</button>`).join('')}</div>
+    </div>
+    <div id="an-chart-wrap"><canvas id="an-chart"></canvas></div>
+    <div class="an-metrics">${METRICS.map(metricHTML).join('')}</div>
+    ${w.description ? `<p class="an-desc">${escapeHTML(w.description)}</p>` : ''}
+  `;
+  _drawAnalysisChart((h[activeAnalysisTF] || h.YTD || h['6M'] || []));
+}
+
+function clearAnalysisPanel() {
+  activeAnalysisTicker = null;
+  document.getElementById('analysis-hint').textContent = '';
+  document.getElementById('analysis-content').innerHTML =
+    '<div class="an-empty">Click a company in the watchlist to view analysis.</div>';
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
@@ -774,19 +1022,22 @@ function renderWatchlist() {
   document.getElementById('val-portfolio').textContent = fmt$(T.portfolio_value || 0);
   document.getElementById('val-savings').textContent   = fmt$(T.savings_total   || 0);
 
-  const holdings = D.holdings || [];
-  buildDoughnut(
-    'chart-portfolio',
-    holdings.length ? holdings.map(h => h.ticker) : ['—'],
-    holdings.length ? holdings.map(h => h.value)  : [1],
-  );
+  // Defer 3D init by one frame so layout dimensions are committed
+  requestAnimationFrame(() => {
+    const holdings = D.holdings || [];
+    build3DRing(
+      'chart-portfolio',
+      holdings.length ? holdings.map(h => h.ticker) : ['—'],
+      holdings.length ? holdings.map(h => h.value)  : [1],
+    );
 
-  const savings = D.savings || [];
-  buildDoughnut(
-    'chart-savings',
-    savings.length ? savings.map(s => s.name)    : ['—'],
-    savings.length ? savings.map(s => s.balance) : [1],
-  );
+    const savings = D.savings || [];
+    build3DRing(
+      'chart-savings',
+      savings.length ? savings.map(s => s.name)    : ['—'],
+      savings.length ? savings.map(s => s.balance) : [1],
+    );
+  });
 
   renderProgressBar('prog-portfolio', T.portfolio_value || 0, T.portfolio_goal || null, 'portfolio');
   renderProgressBar('prog-savings',   T.savings_total   || 0, T.savings_goal   || null, 'savings');
@@ -803,6 +1054,69 @@ function renderWatchlist() {
   renderHoldings();
   renderSavings();
   renderWatchlist();
+  clearAnalysisPanel();
+
+  // ── Watchlist company click → analysis ──────────────────────────────────
+  document.getElementById('watchlist-rows').addEventListener('click', e => {
+    const nameEl = e.target.closest('.wl-name');
+    if (!nameEl) return;
+    const ticker = nameEl.closest('.wl-row')?.dataset.ticker;
+    const w      = ticker && (D.watchlist || []).find(x => x.ticker === ticker);
+    if (!w) return;
+    document.querySelectorAll('.wl-name').forEach(n => n.classList.remove('active-analysis'));
+    if (activeAnalysisTicker === ticker) { clearAnalysisPanel(); return; }
+    nameEl.classList.add('active-analysis');
+    activeAnalysisTicker = ticker;
+    renderAnalysisPanel(w);
+    document.getElementById('analysis-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ── Analysis TF buttons ──────────────────────────────────────────────────
+  document.getElementById('analysis-panel').addEventListener('click', e => {
+    const btn = e.target.closest('[data-an-tf]');
+    if (!btn) return;
+    const w = (D.watchlist || []).find(x => x.ticker === activeAnalysisTicker);
+    if (!w) return;
+    activeAnalysisTF = btn.dataset.anTf;
+    document.querySelectorAll('[data-an-tf]').forEach(b =>
+      b.classList.toggle('active', b.dataset.anTf === activeAnalysisTF)
+    );
+    _drawAnalysisChart((w.history || {})[activeAnalysisTF] || []);
+  });
+
+  // ── Watchlist company tooltip ───────────────────────────────────────────
+  const wlTip     = document.getElementById('wl-tooltip');
+  const ttSector  = document.getElementById('tt-sector');
+  const ttDesc    = document.getElementById('tt-desc');
+  let   wlTipTimer = null;
+
+  document.getElementById('watchlist-rows').addEventListener('mouseover', e => {
+    const nameEl = e.target.closest('.wl-name');
+    if (!nameEl) return;
+    const desc   = nameEl.dataset.description || '';
+    const sector = nameEl.dataset.sector      || '';
+    if (!desc && !sector) return;
+    ttSector.textContent = sector;
+    ttSector.style.display = sector ? 'block' : 'none';
+    ttDesc.textContent   = desc;
+    clearTimeout(wlTipTimer);
+    wlTip.style.display  = 'block';
+    wlTip.style.opacity  = '1';
+  });
+
+  document.getElementById('watchlist-rows').addEventListener('mousemove', e => {
+    if (!e.target.closest('.wl-name')) return;
+    const x = e.clientX + 16;
+    const y = e.clientY + 10;
+    wlTip.style.left = (x + wlTip.offsetWidth > window.innerWidth ? e.clientX - wlTip.offsetWidth - 8 : x) + 'px';
+    wlTip.style.top  = (y + wlTip.offsetHeight > window.innerHeight ? e.clientY - wlTip.offsetHeight - 8 : y) + 'px';
+  });
+
+  document.getElementById('watchlist-rows').addEventListener('mouseout', e => {
+    if (!e.target.closest('.wl-name')) return;
+    wlTip.style.opacity = '0';
+    wlTipTimer = setTimeout(() => { wlTip.style.display = 'none'; }, 150);
+  });
 })();
 </script>
 </body>

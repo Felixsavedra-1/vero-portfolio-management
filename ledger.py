@@ -101,7 +101,7 @@ def load_transactions(path: Path) -> List[Transaction]:
     result = []
     for i, r in enumerate(raw):
         # Normalize legacy fields: date→timestamp, type→action
-        timestamp = r['timestamp'] if r.get('timestamp') is not None else r.get('date', '')
+        timestamp = r.get('timestamp') or r.get('date', '')
         action    = (r['action'] if r.get('action') is not None else r.get('type', '')).lower()
         txn_id    = r.get('id') or f"txn_{timestamp[:10]}_{r.get('ticker', '')}_{i}"
         shares    = r.get('shares') or 0.0

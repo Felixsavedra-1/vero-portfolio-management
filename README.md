@@ -2,13 +2,13 @@
 
 > Wake up. Open terminal. Type `brief`.
 
-A terminal-based investment portfolio tracker. Log trades at live or historical prices, track realized and unrealized P&L, run a daily market briefing — stored locally, no accounts required.
+Terminal portfolio tracker. Trades, P&L, daily brief, interactive dashboard — stored locally, no accounts.
 
 ![Dashboard preview](docs/dashboard-preview.png)
 
 ---
 
-## Setup
+## Install
 
 Requires Python 3.9+
 
@@ -18,68 +18,69 @@ cd portfolio-cli
 sudo bash setup.sh
 ```
 
-Installs dependencies and registers `brief` and `portfolio` as system commands.
-
-> **Note:** `sudo` is required because the installer writes to `/usr/local/bin/`.
+`sudo` required — installer writes to `/usr/local/bin/`.
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-portfolio buy AAPL 1000      # log your first trade
-portfolio show               # view holdings
-brief                        # run your morning brief + open dashboard
+portfolio buy AAPL 1000    # log a trade at live price
+portfolio show             # view positions
+brief                      # morning brief + dashboard
 ```
 
-Data is stored in `~/.portfolio/` and created automatically on first use. Nothing is written to the project directory.
+Data lives in `~/.portfolio/`. Created automatically on first use.
 
 ---
 
-## Morning Brief
+## Morning brief
 
 ```
 ════════════════════════════════════════════════════════════════════════
-  Vero  ·  Monday, April 14, 2026  8:02 AM ET
+  Vero  ·  Monday, April 20, 2026  8:02 AM ET
   @vedra&co
 ════════════════════════════════════════════════════════════════════════
 
 Savings
 
-  Bank       Account              Balance     APY    Interest/mo
+  Bank       Account              Balance      APY    Interest/mo
   ────────────────────────────────────────────────────────────────────────────
-  Amex       Car Fund          $12,450.00   4.00%    +$41.50/mo
-  Amex       Housing Fund      $38,200.00   4.00%   +$127.33/mo
+  Amex       Car                $5,200.00    3.20%    +$13.87/mo
+  Amex       Housing            $8,400.00    3.20%    +$22.40/mo
   ────────────────────────────────────────────────────────────────────────────
-             Total             $50,650.00           +$168.83/mo
+             Total             $13,600.00             +$36.27/mo
 
 Portfolio
 
-  Value     $75,911.00
-  Invested  $51,100.00  ·  since Mar 15, 2022
+  Value     $72,450.00
+  Invested  $46,440.00  ·  since Mar 15, 2022
 
-  Ticker      Price    Wt       $P&L         1D        1W        1M       YTD
+  Ticker     Price    Wt       $P&L        1D        1W        1M       YTD
   ────────────────────────────────────────────────────────────────────────────
-  NVDA      $118.00   28%  +$11,520.00    +1.85%   +3.20%  +18.50%   +42.10%
-              mkt $21,240  ·  cost $9,720  ·  gain +$11,520 (+118.52%)
-  AAPL      $199.00   25%   +$4,465.00    +0.45%   -1.10%   +4.20%   +14.30%
-              mkt $18,905  ·  cost $14,440  ·  gain +$4,465 (+30.92%)
-  AXP       $242.00   24%   +$4,650.00    +1.23%   +3.10%  +18.50%   +42.10%
-              mkt $18,150  ·  cost $13,500  ·  gain +$4,650 (+34.44%)
-  SWPPX *    $73.40   23%   +$4,176.00    +0.41%   +1.20%   +4.80%   +12.30%
-              mkt $17,616  ·  cost $13,440  ·  gain +$4,176 (+31.07%)
+  NVDA     $118.20   33%    +$437.34   +1.85%   +3.20%  +18.50%   +42.10%
+              mkt $23,640.00  ·  cost $10,000.00  ·  gain +$13,640.00 (+136.40%)
+  AAPL     $199.50   22%     +$71.82   +0.45%   -1.10%   +4.20%   +14.30%
+              mkt $15,960.00  ·  cost $12,000.00  ·  gain +$3,960.00 (+33.00%)
+  AXP      $242.10   20%    +$178.67   +1.23%   +3.10%  +18.50%   +38.20%
+              mkt $14,526.00  ·  cost $11,000.00  ·  gain +$3,526.00 (+32.05%)
+  SWPPX *   $73.40   24%     +$69.22   +0.41%   +1.20%   +4.80%   +12.30%
+              mkt $16,882.00  ·  cost $13,440.00  ·  gain +$3,442.00 (+25.61%)
   ────────────────────────────────────────────────────────────────────────────
-  Portfolio    —       —   +$24,811.00    +0.98%   +1.60%  +11.20%   +25.40%
-  S&P 500      —       —            —     +0.30%   +0.80%   +3.10%    +8.40%
-  Alpha        —       —            —     +0.68%   +0.80%   +8.10%   +17.00%
+  Portfolio    —       —    +$757.05   +1.05%   +1.55%  +10.90%   +25.60%
+  S&P 500      —       —           —   +0.30%   +0.80%   +3.10%    +8.40%
+  Alpha        —       —           —   +0.75%   +0.75%   +7.80%   +17.20%
 
 Watchlist
 
-  Company              Ticker   Price       1D        1W        1M   Signal
+  Company              Ticker    Price       1D        1W        1M   Signal
   ────────────────────────────────────────────────────────────────────────────
+  American Express     AXP    $242.10   +1.23%   +3.10%  +18.50%   ▲ BULLISH   strong momentum
   JPMorgan             JPM    $248.30   +0.15%   +0.40%   +1.20%   ~ NEUTRAL   mixed signals
-  Alphabet             GOOGL  $156.80   -0.82%   -2.10%   -5.30%   ▼ BEARISH   downtrend
-  Meta Platforms       META   $592.40   +2.14%   +3.60%   +8.50%   ▲ BULLISH   strong momentum
+  Apple                AAPL   $199.50   +0.45%   -1.10%   +4.20%   ▲ BULLISH   dip in uptrend
+  Nvidia               NVDA   $118.20   +1.85%   +3.20%  +18.50%   ▲ BULLISH   strong momentum
+  Tesla                TSLA   $248.90   -2.14%   -6.30%  -12.40%   ▼ BEARISH   downtrend
+  Oklo                 OKLO    $42.80   +3.20%   +8.10%  +22.30%   ▲ BULLISH   strong momentum
 
 Global markets  (local currency)
 
@@ -94,54 +95,43 @@ Risk snapshot  (trailing 1 year)
 ════════════════════════════════════════════════════════════════════════
 ```
 
-Direction arrows are color-coded: green ▲ up, red ▼ down, orange ~ neutral.
+`*` — mutual fund NAV updated after 4 PM ET, reflects prior close.
 
 ---
 
 ## Commands
 
 ```bash
-# Portfolio
-portfolio buy  TICKER DOLLARS
-portfolio buy  TICKER DOLLARS --date 2024-01-15
-portfolio buy  TICKER DOLLARS --date 2024-01-15 --price 185.20 --notes "opened"
-portfolio sell TICKER DOLLARS
-portfolio sell TICKER DOLLARS --date 2024-06-10
+# Trades
+portfolio buy   TICKER DOLLARS [--price P] [--notes "..."]
+portfolio sell  TICKER DOLLARS [--price P]
 portfolio show
-portfolio gains
-portfolio gains --ticker AAPL
-portfolio history
-portfolio history --ticker AAPL --limit 10
+portfolio gains [--ticker TICKER]
+portfolio history [--ticker TICKER] [--limit N]
 portfolio remove TICKER
 
 # Savings
-portfolio savings set   "Car Fund" 12450 --apy 4.0 --bank "Amex"
-portfolio savings set   "Car Fund" 13000            # update balance only
-portfolio savings set   "Car Fund" --bank "Amex"    # update bank only
-portfolio savings remove "Car Fund"
+portfolio savings set    NAME BALANCE [--apy RATE] [--bank NAME]
+portfolio savings remove NAME
 
-# Goals (shown as progress bars in the dashboard)
-portfolio goal set portfolio 200000   # set total portfolio target
-portfolio goal set savings   50000    # set total savings target
-portfolio goal remove portfolio
+# Goals
+portfolio goal set portfolio|savings AMOUNT
+portfolio goal remove portfolio|savings
 portfolio goal show
 ```
-
-Data is stored in `~/.portfolio/`.
 
 ---
 
 ## Dashboard
 
-The morning brief automatically opens an interactive dashboard in your browser.
-
 ```bash
-brief                  # brief + dashboard
-python dashboard.py    # dashboard only
+brief                 # brief + open dashboard
+python dashboard.py   # dashboard only
 ```
 
-> **Headless / Linux servers:** If no display is available, the browser won't open. The dashboard HTML path is printed instead — copy it into a local browser or `scp` the file to view it.
+Click any company name in the watchlist to open a live analysis: returns across five windows, annualized volatility, max drawdown, and a switchable price chart — all computed from data already on the page.
 
+> On headless servers, the HTML is written to `~/.portfolio/dashboard.html`. Copy the path or `scp` the file to view it.
 
 ---
 
@@ -158,22 +148,22 @@ WATCHLIST = {
 
 | Setting | Default | Description |
 |:---|:---|:---|
-| `WATCHLIST` | `{}` | Tickers shown in the watchlist |
+| `WATCHLIST` | `{}` | Tickers in the watchlist |
 | `MUTUAL_FUNDS` | `frozenset()` | NAV-lagged tickers, flagged `*` in the brief |
-| `BENCHMARK` | `SPY` | Benchmark for alpha calculation |
+| `BENCHMARK` | `SPY` | Benchmark for alpha |
 | `RISK_FREE_RATE` | `0.045` | Annual risk-free rate for Sharpe |
-| `GLOBAL_INDICES` | *(see config.py)* | Markets shown in the global section |
+| `INTEREST_PAYMENT_DAY` | `None` | Day of month savings interest is credited |
 | `BRIEF_TIMEZONE` | `America/New_York` | Timezone for the brief header |
 
 ---
 
-## Deep Analysis
+## Deep analysis
 
 ```bash
 python portfolio_analyzer.py
 ```
 
-Tearsheet (CAGR, Sharpe with Lo 2002 CI, volatility, max drawdown) and a 6-panel chart saved to `~/.portfolio/portfolio_analysis.png`.
+CAGR, Sharpe with Lo (2002) confidence intervals, volatility, max drawdown — for the portfolio, benchmark, and each position. Saves a 6-panel chart to `~/.portfolio/portfolio_analysis.png`.
 
 ---
 

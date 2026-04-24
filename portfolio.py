@@ -172,7 +172,6 @@ def cmd_sell(args: argparse.Namespace) -> None:
         del holdings[ticker]
         status = 'position closed'
     else:
-        holdings[ticker] = h
         status = f'{h.shares:.4f} shares remaining'
 
     save_holdings(holdings, HOLDINGS_FILE)

@@ -5,16 +5,81 @@ The only module in this project that calls yfinance.
 All other modules receive price data as plain dicts.
 """
 
+import json
 import sys
 import warnings
 from contextlib import contextmanager
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
+from pathlib import Path
 from typing import Dict, Iterator, List
 
 import pandas as pd
 import yfinance as yf
 
 HOLIDAY_WINDOW_DAYS = 7  # lookback window to find the prior close around a target date
+
+_DESC_CACHE_FILE = Path.home() / '.portfolio' / 'watchlist_descriptions_cache.json'
+_DESC_CACHE_TTL_DAYS = 30
+
+
+def _load_desc_cache() -> dict:
+    if _DESC_CACHE_FILE.exists():
+        try:
+            return json.loads(_DESC_CACHE_FILE.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def _save_desc_cache(cache: dict) -> None:
+    _DESC_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _DESC_CACHE_FILE.write_text(json.dumps(cache, indent=2))
+
+
+def _is_cache_fresh(entry: dict) -> bool:
+    ts = entry.get('cached_at')
+    if not ts:
+        return False
+    age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).days
+    return age < _DESC_CACHE_TTL_DAYS
+
+
+def _first_sentences(text: str, n: int = 3) -> str:
+    """Extract the first n sentences from text."""
+    import re
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    return ' '.join(sentences[:n])
+
+
+def _rewrite_description(raw: str, ticker: str) -> str:
+    """
+    Rewrite via Claude if ANTHROPIC_API_KEY is set; otherwise extract first 3 sentences.
+    Claude is an optional dependency — the project works without it.
+    """
+    import os
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        return _first_sentences(raw)
+    try:
+        import anthropic
+        client = anthropic.Anthropic()
+        msg = client.messages.create(
+            model='claude-haiku-4-5',
+            max_tokens=150,
+            messages=[{
+                'role': 'user',
+                'content': (
+                    f"Describe {ticker} in 2-3 sentences. "
+                    "Be blunt and factual. State what they make or sell, who buys it, "
+                    "and one thing that sets them apart. "
+                    "No adjectives like 'leading' or 'innovative'. No sentences starting "
+                    "with 'The company'. No filler. Raw facts only.\n\n"
+                    f"{raw}"
+                ),
+            }],
+        )
+        return msg.content[0].text.strip()
+    except Exception:
+        return _first_sentences(raw)
 
 
 class PriceFetchError(ValueError):
@@ -137,7 +202,7 @@ def fetch_prices_with_change(tickers: List[str]) -> Dict[str, Dict[str, float]]:
             continue
         result[t] = {
             'price':      round(float(s.iloc[-1]), 4),
-            'prev_close': round(float(s.iloc[-2]) if len(s) >= 2 else float(s.iloc[-1]), 4),
+            'prev_close': round(float(s.iloc[-2]), 4) if len(s) >= 2 else float('nan'),
         }
     return result
 
@@ -180,5 +245,41 @@ def fetch_watchlist_history(tickers: List[str]) -> Dict[str, Dict[str, List[floa
             '6M':  all_p[max(0, n - 126):],
             'YTD': ytd_p if ytd_p else all_p[-1:],
         }
+
+    return result
+
+
+def fetch_watchlist_info(tickers: List[str]) -> Dict[str, Dict[str, str]]:
+    """
+    Returns {ticker: {"description": str, "sector": str}} for each ticker.
+    Descriptions are rewritten by Claude for concision and cached for 30 days.
+    """
+    cache  = _load_desc_cache()
+    result: Dict[str, Dict[str, str]] = {}
+    dirty  = False
+
+    with yf_warnings():
+        for ticker in tickers:
+            cached = cache.get(ticker, {})
+            if _is_cache_fresh(cached):
+                result[ticker] = {'description': cached['description'], 'sector': cached['sector']}
+                continue
+            try:
+                info   = yf.Ticker(ticker).info
+                raw    = info.get('longBusinessSummary') or ''
+                sector = info.get('sector') or ''
+                desc   = _rewrite_description(raw, ticker) if raw else ''
+                result[ticker] = {'description': desc, 'sector': sector}
+                cache[ticker]  = {
+                    'description': desc,
+                    'sector':      sector,
+                    'cached_at':   datetime.now(timezone.utc).isoformat(),
+                }
+                dirty = True
+            except Exception:
+                result[ticker] = {'description': '', 'sector': ''}
+
+    if dirty:
+        _save_desc_cache(cache)
 
     return result

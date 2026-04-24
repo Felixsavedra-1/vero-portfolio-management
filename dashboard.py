@@ -6,6 +6,7 @@ Usage: python dashboard.py
 
 from __future__ import annotations
 
+import base64
 import json
 import webbrowser
 from datetime import date, datetime, timezone
@@ -13,10 +14,11 @@ from pathlib import Path
 
 from config import DATA_DIR, GOALS_FILE, HOLDINGS_FILE, INTEREST_PAYMENT_DAY, MOMENTUM_FLAT_BAND, SAVINGS_FILE, WATCHLIST
 from ledger import _payment_dates, accrued_interest, projected_next_payment, load_goals, load_holdings, load_savings
-from prices import fetch_prices_batch, fetch_prices_with_change, fetch_watchlist_history
+from prices import fetch_prices_batch, fetch_prices_with_change, fetch_watchlist_history, fetch_watchlist_info
 
-OUT_FILE  = DATA_DIR / "dashboard.html"
-TEMPLATE  = Path(__file__).parent / "dashboard.html"
+OUT_FILE     = DATA_DIR / "dashboard.html"
+TEMPLATE     = Path(__file__).parent / "dashboard.html"
+ANALYSIS_PNG = DATA_DIR / "portfolio_analysis.png"
 
 
 def _compute_signal(history: dict, flat_band: float) -> dict:
@@ -46,11 +48,13 @@ def _build_holdings_data(
     holdings: dict,
     prices: dict,
     prev_prices: dict,
+    holding_history: dict | None = None,
 ) -> tuple:
     """Returns (holding_rows, portfolio_value, total_cost)."""
     rows = []
     portfolio_value = 0.0
     total_cost = 0.0
+    history = holding_history or {}
     for ticker, h in holdings.items():
         total_cost += h.cost
         price = prices.get(ticker)
@@ -63,6 +67,7 @@ def _build_holdings_data(
                 "price": 0.0, "value": round(h.cost, 2),
                 "gain_pct": 0.0, "gain_dollar": 0.0,
                 "day_change_dollar": 0.0, "day_change_pct": 0.0,
+                "history_1m": history.get(ticker, {}).get('1M', []),
             })
             continue
         value          = h.shares * price
@@ -83,6 +88,7 @@ def _build_holdings_data(
             "gain_dollar":       round(gain_dollar, 2),
             "day_change_dollar": round(day_chg_dollar, 2),
             "day_change_pct":    round(day_chg_pct, 2),
+            "history_1m":        history.get(ticker, {}).get('1M', []),
         })
     return rows, portfolio_value, total_cost
 
@@ -123,17 +129,21 @@ def _build_watchlist_data() -> list:
     wl_tickers = list(WATCHLIST.keys())
     wl_prices  = fetch_prices_batch(wl_tickers)
     wl_history = fetch_watchlist_history(wl_tickers)
+    wl_info    = fetch_watchlist_info(wl_tickers)
     rows = []
     for ticker, label in WATCHLIST.items():
         history = wl_history.get(ticker, {})
         signal  = _compute_signal(history, MOMENTUM_FLAT_BAND)
+        info    = wl_info.get(ticker, {})
         rows.append({
-            "ticker":  ticker,
-            "label":   label,
-            "price":   round(wl_prices.get(ticker, 0.0), 2),
-            "signal":  signal["type"],
-            "reason":  signal["reason"],
-            "history": history,
+            "ticker":      ticker,
+            "label":       label,
+            "price":       round(wl_prices.get(ticker, 0.0), 2),
+            "signal":      signal["type"],
+            "reason":      signal["reason"],
+            "history":     history,
+            "description": info.get("description", ""),
+            "sector":      info.get("sector", ""),
         })
     return rows
 
@@ -150,7 +160,8 @@ def build_payload(prices: dict | None = None, prev_prices: dict | None = None) -
         prev_prices = {t: v['prev_close'] for t, v in raw.items()}
     prev_prices = prev_prices or {}
 
-    holding_rows, portfolio_value, total_cost = _build_holdings_data(holdings, prices, prev_prices)
+    holding_history = fetch_watchlist_history(tickers) if tickers else {}
+    holding_rows, portfolio_value, total_cost = _build_holdings_data(holdings, prices, prev_prices, holding_history)
     holding_rows.sort(key=lambda r: r["value"], reverse=True)
 
     savings_rows, savings_total, total_accrued = _build_savings_data(savings_acc, date.today())
@@ -164,6 +175,7 @@ def build_payload(prices: dict | None = None, prev_prices: dict | None = None) -
         "savings":   savings_rows,
         "holdings":  holding_rows,
         "watchlist": _build_watchlist_data(),
+        "chart_src": _embed_chart(),
         "totals": {
             "portfolio_value":  round(portfolio_value, 2),
             "savings_total":    round(savings_total, 2),
@@ -175,6 +187,12 @@ def build_payload(prices: dict | None = None, prev_prices: dict | None = None) -
             "payment_day":      INTEREST_PAYMENT_DAY,
         },
     }
+
+
+def _embed_chart() -> str:
+    if not ANALYSIS_PNG.exists():
+        return ""
+    return "data:image/png;base64," + base64.b64encode(ANALYSIS_PNG.read_bytes()).decode()
 
 
 def build_html(payload: dict) -> Path:
