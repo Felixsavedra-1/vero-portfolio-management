@@ -1,13 +1,13 @@
 """
-generate_preview.py — Write a static demo dashboard to ~/.portfolio/dashboard.html.
-
-Run this, open the printed path in a browser, screenshot at ~1400×800px,
-and save the result as docs/dashboard-preview.png.
+generate_preview.py — Write a static demo dashboard and auto-capture docs/dashboard-preview.png.
 """
 
 import random
-import webbrowser
+from pathlib import Path
+from playwright.sync_api import sync_playwright
 from dashboard import build_html
+
+DOCS_OUT = Path(__file__).parent / "docs" / "dashboard-preview.png"
 
 # ── Demo price histories ──────────────────────────────────────────────────────
 
@@ -129,6 +129,12 @@ html = html.replace(
 )
 out.write_text(html)
 
-print(f"Preview written to: {out}")
-print("Screenshot at ~1400×800px and save to docs/dashboard-preview.png")
-webbrowser.open(out.as_uri())
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page(viewport={"width": 1400, "height": 800})
+    page.goto(out.as_uri())
+    page.wait_for_timeout(1500)
+    page.screenshot(path=str(DOCS_OUT), full_page=False)
+    browser.close()
+
+print(f"Screenshot saved to: {DOCS_OUT}")
