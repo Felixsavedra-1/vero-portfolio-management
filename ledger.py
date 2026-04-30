@@ -14,7 +14,6 @@ import sys
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -43,7 +42,7 @@ class Transaction:
     shares:       float
     dollars:      float
     price:        float
-    realized_pnl: Optional[float] = None   # None on buys; dollar gain/loss on sells
+    realized_pnl: float | None = None   # None on buys; dollar gain/loss on sells
     notes:        str = ""
 
 
@@ -55,7 +54,17 @@ def _atomic_write(path: Path, data: object) -> None:
     tmp.rename(path)
 
 
-def load_holdings(path: Path) -> Dict[str, Holding]:
+def _coerce_float(value: object, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return default
+    return default if math.isnan(v) else v
+
+
+def load_holdings(path: Path) -> dict[str, Holding]:
     if not path.exists():
         return {}
     with open(path) as f:
@@ -65,20 +74,17 @@ def load_holdings(path: Path) -> Dict[str, Holding]:
             sys.exit(f"Corrupt data file: {path}\nFix or remove the file to continue.")
     result = {}
     for ticker, v in data.items():
-        shares = v.get('shares', 0.0)
-        if shares is None or (isinstance(shares, float) and math.isnan(shares)):
-            shares = 0.0
         result[ticker] = Holding(
             ticker=ticker,
-            shares=float(shares),
-            cost=float(v.get('cost', 0.0)),
+            shares=_coerce_float(v.get('shares')),
+            cost=_coerce_float(v.get('cost')),
             first_purchase=v.get('first_purchase') or v.get('start_date', ''),
             label=v.get('label', ticker),
         )
     return result
 
 
-def save_holdings(holdings: Dict[str, Holding], path: Path) -> None:
+def save_holdings(holdings: dict[str, Holding], path: Path) -> None:
     _atomic_write(path, {
         ticker: {
             'shares':         h.shares,
@@ -90,7 +96,7 @@ def save_holdings(holdings: Dict[str, Holding], path: Path) -> None:
     })
 
 
-def load_transactions(path: Path) -> List[Transaction]:
+def load_transactions(path: Path) -> list[Transaction]:
     if not path.exists():
         return []
     with open(path) as f:
@@ -100,16 +106,11 @@ def load_transactions(path: Path) -> List[Transaction]:
             sys.exit(f"Corrupt data file: {path}\nFix or remove the file to continue.")
     result = []
     for i, r in enumerate(raw):
-        # Normalize legacy fields: date→timestamp, type→action
         timestamp = r.get('timestamp') or r.get('date', '')
         action    = (r['action'] if r.get('action') is not None else r.get('type', '')).lower()
         txn_id    = r.get('id') or f"txn_{timestamp[:10]}_{r.get('ticker', '')}_{i}"
-        shares    = r.get('shares') or 0.0
-        price     = r.get('price')  or 0.0
-        if isinstance(shares, float) and math.isnan(shares):
-            shares = 0.0
-        if isinstance(price, float) and math.isnan(price):
-            price = 0.0
+        shares    = _coerce_float(r.get('shares'))
+        price     = _coerce_float(r.get('price'))
         result.append(Transaction(
             id=txn_id,
             timestamp=timestamp,
@@ -155,7 +156,7 @@ class SavingsAccount:
         return self.balance * self.apy / 12
 
 
-def load_savings(path: Path) -> List[SavingsAccount]:
+def load_savings(path: Path) -> list[SavingsAccount]:
     if not path.exists():
         return []
     with open(path) as f:
@@ -174,11 +175,11 @@ def load_savings(path: Path) -> List[SavingsAccount]:
     ]
 
 
-def save_savings(accounts: List[SavingsAccount], path: Path) -> None:
+def save_savings(accounts: list[SavingsAccount], path: Path) -> None:
     _atomic_write(path, [{'name': a.name, 'balance': a.balance, 'apy': a.apy, 'bank': a.bank} for a in accounts])
 
 
-def load_goals(path: Path) -> Dict[str, float]:
+def load_goals(path: Path) -> dict[str, float]:
     if not path.exists():
         return {}
     with open(path) as f:
@@ -188,11 +189,11 @@ def load_goals(path: Path) -> Dict[str, float]:
             sys.exit(f"Corrupt data file: {path}\nFix or remove the file to continue.")
 
 
-def save_goals(goals: Dict[str, float], path: Path) -> None:
+def save_goals(goals: dict[str, float], path: Path) -> None:
     _atomic_write(path, goals)
 
 
-def _payment_dates(payment_day: int, today: date) -> Tuple[date, date]:
+def _payment_dates(payment_day: int, today: date) -> tuple[date, date]:
     """Returns (last_payment_date, next_payment_date) for a given day-of-month."""
     def safe_date(year: int, month: int, day: int) -> date:
         return date(year, month, min(day, calendar.monthrange(year, month)[1]))
@@ -232,27 +233,3 @@ def projected_next_payment(
     last, next_ = _payment_dates(payment_day, today)
     days = (next_ - last).days
     return account.balance * account.apy / 365 * days
-
-
-def cost_basis_weights(holdings: Dict[str, Holding]) -> Dict[str, float]:
-    """Cost-basis weights — no live prices needed."""
-    total = sum(h.cost for h in holdings.values())
-    if total == 0:
-        return {}
-    return {ticker: h.cost / total for ticker, h in holdings.items()}
-
-
-def market_value_weights(
-    holdings: Dict[str, Holding],
-    prices: Dict[str, float],
-) -> Dict[str, float]:
-    """Market-value weights. Tickers missing from prices are excluded."""
-    values = {
-        t: h.shares * prices[t]
-        for t, h in holdings.items()
-        if t in prices and math.isfinite(prices[t]) and h.shares > 0
-    }
-    total = sum(values.values())
-    if total == 0:
-        return {}
-    return {t: v / total for t, v in values.items()}

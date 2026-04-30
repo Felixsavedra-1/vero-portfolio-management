@@ -143,6 +143,10 @@ body::after {
   font-size: 32px; color: var(--tan);
   letter-spacing: 0.04em; font-weight: bold;
 }
+.panel-value--cyan {
+  color: #00d4ff;
+  text-shadow: 0 0 18px rgba(0,212,255,0.65), 0 0 40px rgba(0,212,255,0.2);
+}
 
 /* ── 3D chart container ─────────────────────────────────────────────────── */
 .chart-container {
@@ -365,7 +369,7 @@ body::after {
     <section class="panel">
       <div class="panel-header">
         <span class="panel-label">SAVINGS</span>
-        <span class="panel-value" id="val-savings">—</span>
+        <span class="panel-value panel-value--cyan" id="val-savings">—</span>
       </div>
       <div class="chart-container" id="chart-savings"
            role="img" aria-label="Savings accounts breakdown by balance"></div>
@@ -380,7 +384,7 @@ body::after {
     <section class="panel">
       <div class="panel-header">
         <span class="panel-label">PORTFOLIO</span>
-        <span class="panel-value" id="val-portfolio">—</span>
+        <span class="panel-value panel-value--cyan" id="val-portfolio">—</span>
       </div>
       <div class="chart-container" id="chart-portfolio"
            role="img" aria-label="Portfolio holdings breakdown by value"></div>
@@ -468,8 +472,8 @@ function typeWriter(el, text, msPer, cb) {
   }, msPer);
 }
 
-// ── Three.js 3D ring chart ──────────────────────────────────────────────────
-function build3DRing(containerId, labels, values) {
+// ── Arc Reactor ring chart ───────────────────────────────────────────────────
+function build3DRing(containerId, labels, values, totalValue) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -478,6 +482,7 @@ function build3DRing(containerId, labels, values) {
     return;
   }
 
+  container.style.position = 'relative';
   container.innerHTML = '';
 
   const W = container.clientWidth  || 280;
@@ -494,84 +499,134 @@ function build3DRing(containerId, labels, values) {
   renderer.setClearColor(0x000000, 0);
   container.appendChild(renderer.domElement);
 
-  const OUTER_R = 1.4, INNER_R = 0.72, DEPTH = 0.28;
-  const MID_R   = (OUTER_R + INNER_R) / 2;
-  const total   = values.reduce((a, b) => a + b, 0) || 1;
-  const group   = new THREE.Group();
-  const meshes  = [];
-  let   ang0    = 0;
+  // ── Ring A — Holdings allocation (outermost) ───────────────────────────────
+  const A_OUT = 1.50, A_IN = 1.28, A_DEPTH = 0.18, GAP = 0.04;
+  const MID_R = (A_OUT + A_IN) / 2;
+  const total  = values.reduce((a, b) => a + b, 0) || 1;
+  const groupA = new THREE.Group();
+  const meshesA = [];
+  let ang0 = 0;
 
   values.forEach((val, i) => {
     if (val <= 0) return;
-    const sliceAng = Math.min((val / total) * Math.PI * 2, Math.PI * 2 - 0.001);
+    const rawAng   = (val / total) * Math.PI * 2;
+    const sliceAng = Math.max(rawAng - GAP, 0.01);
     const hexColor = SLICE_COLORS[i % SLICE_COLORS.length];
     const color    = new THREE.Color(hexColor);
 
     const shape = new THREE.Shape();
-    shape.absarc(0, 0, OUTER_R, ang0, ang0 + sliceAng, false);
-    shape.absarc(0, 0, INNER_R, ang0 + sliceAng, ang0, true);
+    shape.absarc(0, 0, A_OUT, ang0, ang0 + sliceAng, false);
+    shape.absarc(0, 0, A_IN,  ang0 + sliceAng, ang0, true);
     shape.closePath();
 
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: DEPTH, bevelEnabled: false });
-    const mat = new THREE.MeshStandardMaterial({
+    const geo  = new THREE.ExtrudeGeometry(shape, { depth: A_DEPTH, bevelEnabled: false });
+    const mat  = new THREE.MeshStandardMaterial({
       color, emissive: color, emissiveIntensity: 0.3,
-      metalness: 0.7, roughness: 0.4,
+      metalness: 0.8, roughness: 0.3,
     });
-
-    const mesh    = new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(geo, mat);
     mesh.userData = { label: labels[i] || '—', value: val, midAngle: ang0 + sliceAng / 2, hexColor };
-    group.add(mesh);
-    meshes.push(mesh);
-    ang0 += sliceAng;
+    groupA.add(mesh);
+    meshesA.push(mesh);
+    ang0 += rawAng;
   });
 
-  group.position.z = -DEPTH / 2;
-  scene.add(group);
+  groupA.position.z = -A_DEPTH / 2;
+  scene.add(groupA);
 
-  // Static ambient lighting
-  scene.add(new THREE.AmbientLight(0x0d0a06, 3));
-  const wL = new THREE.PointLight(0xFF8003, 2.5, 20);
-  wL.position.set(3, 4, 4);
-  scene.add(wL);
-  const gL = new THREE.PointLight(0xd4956a, 1.0, 20);
-  gL.position.set(-2, -2, 3);
-  scene.add(gL);
-  const fL = new THREE.DirectionalLight(0xffeedd, 0.35);
-  fL.position.set(0, 5, 5);
+  // ── Ring B — Decorative tick ring (middle, counter-rotates) ───────────────
+  const B_OUT = 1.10, B_IN = 0.95, B_DEPTH = 0.12;
+  const groupB  = new THREE.Group();
+  const N_TICKS = 36;
+  const tickAng = (Math.PI * 2) / N_TICKS;
+
+  for (let i = 0; i < N_TICKS; i++) {
+    const a0    = i * tickAng;
+    const shape = new THREE.Shape();
+    shape.absarc(0, 0, B_OUT, a0, a0 + tickAng - 0.03, false);
+    shape.absarc(0, 0, B_IN,  a0 + tickAng - 0.03, a0, true);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: B_DEPTH, bevelEnabled: false });
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x005577, emissive: 0x003344, emissiveIntensity: 0.5,
+      metalness: 0.9, roughness: 0.2,
+    });
+    groupB.add(new THREE.Mesh(geo, mat));
+  }
+  groupB.position.z = -B_DEPTH / 2;
+  scene.add(groupB);
+
+  // ── Ring C — Inner chamber (fast rotation) ────────────────────────────────
+  const C_OUT = 0.55, C_IN = 0.35, C_DEPTH = 0.14;
+  const groupC   = new THREE.Group();
+  const N_INNER  = 8;
+  const innerAng = (Math.PI * 2) / N_INNER;
+
+  for (let i = 0; i < N_INNER; i++) {
+    const a0    = i * innerAng;
+    const shape = new THREE.Shape();
+    shape.absarc(0, 0, C_OUT, a0, a0 + innerAng - 0.06, false);
+    shape.absarc(0, 0, C_IN,  a0 + innerAng - 0.06, a0, true);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: C_DEPTH, bevelEnabled: false });
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.7,
+      metalness: 0.6, roughness: 0.2,
+    });
+    groupC.add(new THREE.Mesh(geo, mat));
+  }
+  groupC.position.z = -C_DEPTH / 2;
+  scene.add(groupC);
+
+  // ── Core glow sphere ──────────────────────────────────────────────────────
+  const coreMat  = new THREE.MeshStandardMaterial({
+    color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 1.0,
+    metalness: 0.0, roughness: 0.0, transparent: true, opacity: 0.9,
+  });
+  const coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.20, 32, 32), coreMat);
+  scene.add(coreMesh);
+
+  // ── Lighting ──────────────────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x000a0f, 2.5));
+  const fL = new THREE.PointLight(0x00d4ff, 2.0, 18);
+  fL.position.set(2, 3, 4);
   scene.add(fL);
+  const bL = new THREE.PointLight(0x0044aa, 1.2, 14);
+  bL.position.set(-2, -2, 2);
+  scene.add(bL);
+  const rL = new THREE.DirectionalLight(0xaaddff, 0.25);
+  rL.position.set(0, 5, 5);
+  scene.add(rL);
 
-  // Dynamic hover light — follows the hovered slice as the ring rotates
-  const hoverLight = new THREE.PointLight(0xFF8003, 0, 8);
+  const hoverLight = new THREE.PointLight(0x00d4ff, 0, 8);
   scene.add(hoverLight);
 
   // ── Particle system ───────────────────────────────────────────────────────
   const PCOUNT = 55;
   const pPos   = new Float32Array(PCOUNT * 3);
   const pVel   = Array.from({ length: PCOUNT }, () => new THREE.Vector3());
-  const pLife  = new Float32Array(PCOUNT); // remaining life in seconds
+  const pLife  = new Float32Array(PCOUNT);
 
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
 
   const pMat = new THREE.PointsMaterial({
-    color: 0xFF8003, size: 0.06,
+    color: 0x00d4ff, size: 0.06,
     transparent: true, opacity: 0,
     blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
   });
   const ps = new THREE.Points(pGeo, pMat);
   scene.add(ps);
 
-  // Park all particles off-screen until first spawn
   for (let i = 0; i < PCOUNT; i++) { pPos[i*3] = pPos[i*3+1] = pPos[i*3+2] = 999; }
 
-  // World-space center of a slice, updated each frame as the ring rotates
   function sliceWorldPos(mesh) {
     const v = new THREE.Vector3(
       Math.cos(mesh.userData.midAngle) * MID_R,
       Math.sin(mesh.userData.midAngle) * MID_R,
-      DEPTH / 2,
+      A_DEPTH / 2,
     );
-    group.localToWorld(v);
+    groupA.localToWorld(v);
     return v;
   }
 
@@ -583,22 +638,21 @@ function build3DRing(containerId, labels, values) {
     const a   = Math.random() * Math.PI * 2;
     pVel[i].set(
       Math.cos(a) * spd * 0.7,
-      Math.sin(a) * spd * 0.5 + 0.005,   // slight upward drift
+      Math.sin(a) * spd * 0.5 + 0.005,
       (Math.random() - 0.5) * spd * 0.4,
     );
     pLife[i] = 0.5 + Math.random() * 0.5;
   }
 
-  // ── Hover state ───────────────────────────────────────────────────────────
+  // ── Hover + tooltip ───────────────────────────────────────────────────────
   let hoverTarget   = null;
   let particleAlpha = 0;
 
-  // ── Tooltip ───────────────────────────────────────────────────────────────
   const tip = document.createElement('div');
-  tip.style.cssText = "position:absolute;pointer-events:none;background:#0d0b09;" +
-    "border:1px solid #1a1a1a;color:#b8b8b8;font-family:'Courier New',monospace;" +
+  tip.style.cssText = "position:absolute;pointer-events:none;background:#050c10;" +
+    "border:1px solid #004455;color:#b8b8b8;font-family:'Courier New',monospace;" +
     "font-size:12px;letter-spacing:0.08em;padding:7px 12px;border-radius:2px;" +
-    "opacity:0;transition:opacity 0.15s;box-shadow:0 0 10px rgba(255,128,3,0.25);" +
+    "opacity:0;transition:opacity 0.15s;box-shadow:0 0 10px rgba(0,212,255,0.2);" +
     "z-index:10;white-space:nowrap;";
   container.appendChild(tip);
 
@@ -610,11 +664,11 @@ function build3DRing(containerId, labels, values) {
     mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
     mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
     ray.setFromCamera(mouse, camera);
-    const hits = ray.intersectObjects(meshes);
+    const hits = ray.intersectObjects(meshesA);
     if (hits.length) {
       const ud  = hits[0].object.userData;
       const pct = (ud.value / total * 100).toFixed(1);
-      tip.innerHTML     = `${escapeHTML(ud.label)}<br>${fmt$(ud.value)}&nbsp;(${pct}%)`;
+      tip.innerHTML     = `<span style="color:${ud.hexColor}">${escapeHTML(ud.label)}</span>  ${fmt$(ud.value)} <span style="color:var(--dim)">(${pct}%)</span>`;
       tip.style.opacity = '1';
       tip.style.left    = (e.clientX - rect.left + 14) + 'px';
       tip.style.top     = (e.clientY - rect.top  +  8) + 'px';
@@ -630,33 +684,41 @@ function build3DRing(containerId, labels, values) {
   });
 
   // ── Animation loop ────────────────────────────────────────────────────────
+  let clock = 0;
   (function loop() {
     requestAnimationFrame(loop);
-    if (!REDUCED) group.rotation.y += 0.004;
+    clock += 0.016;
 
-    // Animate per-slice emissive glow + radial pop
-    meshes.forEach(m => {
-      const on  = m === hoverTarget;
-      m.material.emissiveIntensity += ((on ? 0.75 : 0.3)  - m.material.emissiveIntensity) * 0.12;
+    if (!REDUCED) {
+      groupA.rotation.y += 0.003;
+      groupB.rotation.y -= 0.002;
+      groupC.rotation.y += 0.009;
+    }
+
+    // Core pulse
+    coreMat.emissiveIntensity = 0.5 + 0.5 * Math.sin(clock * 2.5);
+
+    // Ring A: per-slice emissive + radial pop on hover
+    meshesA.forEach(m => {
+      const on = m === hoverTarget;
+      m.material.emissiveIntensity += ((on ? 0.75 : 0.3) - m.material.emissiveIntensity) * 0.12;
       m.position.x += ((on ? Math.cos(m.userData.midAngle) * 0.1 : 0) - m.position.x) * 0.12;
       m.position.y += ((on ? Math.sin(m.userData.midAngle) * 0.1 : 0) - m.position.y) * 0.12;
     });
 
-    // Hover light tracks the rotating slice in world space
     if (hoverTarget) {
       const lv = sliceWorldPos(hoverTarget);
       lv.z += 0.5;
       hoverLight.position.lerp(lv, 0.15);
       hoverLight.color.set(hoverTarget.userData.hexColor);
-      hoverLight.intensity += (3.0 - hoverLight.intensity) * 0.12;
+      hoverLight.intensity += (2.0 - hoverLight.intensity) * 0.12;
     } else {
       hoverLight.intensity += (0 - hoverLight.intensity) * 0.12;
     }
 
-    // Particle fade-in/out + continuous spawn + drift
-    particleAlpha    += ((hoverTarget ? 1 : 0) - particleAlpha) * 0.1;
-    pMat.opacity      = particleAlpha * 0.88;
-    const origin      = hoverTarget ? sliceWorldPos(hoverTarget) : null;
+    particleAlpha += ((hoverTarget ? 1 : 0) - particleAlpha) * 0.1;
+    pMat.opacity   = particleAlpha * 0.88;
+    const origin   = hoverTarget ? sliceWorldPos(hoverTarget) : null;
     for (let i = 0; i < PCOUNT; i++) {
       pLife[i] -= 0.016;
       if (pLife[i] <= 0) {
@@ -666,7 +728,7 @@ function build3DRing(containerId, labels, values) {
         pPos[i*3]   += pVel[i].x;
         pPos[i*3+1] += pVel[i].y;
         pPos[i*3+2] += pVel[i].z;
-        pVel[i].multiplyScalar(0.97); // drag
+        pVel[i].multiplyScalar(0.97);
       }
     }
     pGeo.attributes.position.needsUpdate = true;
@@ -954,12 +1016,77 @@ function _maxDD(prices) {
   return mdd;
 }
 
+function _estimateDates(n) {
+  const dates = [];
+  const d = new Date();
+  let count = 0;
+  while (count < n) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) {
+      dates.unshift(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      count++;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return dates;
+}
+
+function _attachChartTooltip(wrap, prices, W) {
+  let tip  = wrap.querySelector('.an-tip');
+  let hair = wrap.querySelector('.an-hair');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.className = 'an-tip';
+    tip.style.cssText = 'position:absolute;pointer-events:none;background:#050c10;' +
+      'border:1px solid #00d4ff;color:#00d4ff;font-family:"Courier New",monospace;' +
+      'font-size:11px;letter-spacing:0.08em;padding:5px 10px;border-radius:2px;' +
+      'opacity:0;transition:opacity 0.1s;white-space:nowrap;z-index:20;' +
+      'box-shadow:0 0 10px rgba(0,212,255,0.25);text-shadow:0 0 8px rgba(0,212,255,0.5);';
+    wrap.appendChild(tip);
+  }
+  if (!hair) {
+    hair = document.createElement('div');
+    hair.className = 'an-hair';
+    hair.style.cssText = 'position:absolute;top:5px;bottom:5px;width:1px;pointer-events:none;' +
+      'background:rgba(0,212,255,0.35);box-shadow:0 0 6px rgba(0,212,255,0.4);' +
+      'opacity:0;transition:opacity 0.1s;z-index:19;';
+    wrap.appendChild(hair);
+  }
+
+  const dates = _estimateDates(prices.length);
+  const n = prices.length;
+
+  wrap._anMove && wrap.removeEventListener('mousemove', wrap._anMove);
+  wrap._anLeave && wrap.removeEventListener('mouseleave', wrap._anLeave);
+
+  wrap._anMove = function(e) {
+    const rect = wrap.getBoundingClientRect();
+    const x    = e.clientX - rect.left;
+    const idx  = Math.max(0, Math.min(n - 1, Math.round((x / W) * (n - 1))));
+    const label = `${dates[idx] || ''}  $${(prices[idx] || 0).toFixed(2)}`;
+    tip.textContent  = label;
+    const tipW       = tip.offsetWidth || 130;
+    tip.style.left   = (x + 14 + tipW > W ? x - tipW - 6 : x + 14) + 'px';
+    tip.style.top    = '6px';
+    tip.style.opacity  = '1';
+    hair.style.left    = x + 'px';
+    hair.style.opacity = '1';
+  };
+  wrap._anLeave = function() {
+    tip.style.opacity  = '0';
+    hair.style.opacity = '0';
+  };
+  wrap.addEventListener('mousemove', wrap._anMove);
+  wrap.addEventListener('mouseleave', wrap._anLeave);
+}
+
 function _drawAnalysisChart(prices) {
   requestAnimationFrame(() => {
     const wrap = document.getElementById('an-chart-wrap');
     const c    = document.getElementById('an-chart');
     if (!wrap || !c) return;
-    drawSparkline(c, prices, wrap.clientWidth || 800, wrap.clientHeight || 140);
+    const W = wrap.clientWidth || 800;
+    drawSparkline(c, prices, W, wrap.clientHeight || 140);
+    _attachChartTooltip(wrap, prices, W);
   });
 }
 
@@ -1019,8 +1146,38 @@ function clearAnalysisPanel() {
 (function init() {
   renderHeader();
 
-  document.getElementById('val-portfolio').textContent = fmt$(T.portfolio_value || 0);
-  document.getElementById('val-savings').textContent   = fmt$(T.savings_total   || 0);
+  (function() {
+    const el = document.getElementById('val-savings');
+    const target = T.savings_total || 0;
+    if (!REDUCED) {
+      const dur = 1200, t0 = performance.now();
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+        el.textContent = fmt$(Math.round(target * e));
+        if (p < 1) requestAnimationFrame(tick);
+        else { el.textContent = fmt$(target); scheduleFlicker(el); }
+      })(t0);
+    } else {
+      el.textContent = fmt$(target);
+    }
+  })();
+  (function() {
+    const el = document.getElementById('val-portfolio');
+    const target = T.portfolio_value || 0;
+    if (!REDUCED) {
+      const dur = 1200, t0 = performance.now();
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+        el.textContent = fmt$(Math.round(target * e));
+        if (p < 1) requestAnimationFrame(tick);
+        else { el.textContent = fmt$(target); scheduleFlicker(el); }
+      })(t0);
+    } else {
+      el.textContent = fmt$(target);
+    }
+  })();
 
   // Defer 3D init by one frame so layout dimensions are committed
   requestAnimationFrame(() => {
@@ -1029,6 +1186,7 @@ function clearAnalysisPanel() {
       'chart-portfolio',
       holdings.length ? holdings.map(h => h.ticker) : ['—'],
       holdings.length ? holdings.map(h => h.value)  : [1],
+      T.portfolio_value || 0,
     );
 
     const savings = D.savings || [];
@@ -1036,6 +1194,7 @@ function clearAnalysisPanel() {
       'chart-savings',
       savings.length ? savings.map(s => s.name)    : ['—'],
       savings.length ? savings.map(s => s.balance) : [1],
+      T.savings_total || 0,
     );
   });
 

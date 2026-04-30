@@ -5,6 +5,7 @@ Run this, open the printed path in a browser, screenshot at ~1400×800px,
 and save the result as docs/dashboard-preview.png.
 """
 
+import random
 import webbrowser
 from dashboard import build_html
 
@@ -12,7 +13,6 @@ from dashboard import build_html
 
 def _trend(start, end, n):
     """Linear price series with slight noise for a realistic sparkline."""
-    import random
     random.seed(42)
     step = (end - start) / (n - 1)
     return [round(start + step * i + random.uniform(-step * 0.4, step * 0.4), 2) for i in range(n)]

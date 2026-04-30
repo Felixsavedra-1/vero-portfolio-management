@@ -2,11 +2,14 @@
 metrics.py — Shared financial metric calculations.
 """
 
+import math
+
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 from config import TRADING_DAYS_PER_YEAR
+from ledger import Holding
 
 
 def annualized_sharpe(returns: pd.Series, risk_free_rate: float) -> float:
@@ -85,3 +88,27 @@ def risk_snapshot(
         'volatility':   annual_vol,
         'max_drawdown': max_drawdown(cumulative),
     }
+
+
+def cost_basis_weights(holdings: dict[str, Holding]) -> dict[str, float]:
+    """Cost-basis weights — no live prices needed."""
+    total = sum(h.cost for h in holdings.values())
+    if total == 0:
+        return {}
+    return {ticker: h.cost / total for ticker, h in holdings.items()}
+
+
+def market_value_weights(
+    holdings: dict[str, Holding],
+    prices: dict[str, float],
+) -> dict[str, float]:
+    """Market-value weights. Tickers missing from prices are excluded."""
+    values = {
+        t: h.shares * prices[t]
+        for t, h in holdings.items()
+        if t in prices and math.isfinite(prices[t]) and h.shares > 0
+    }
+    total = sum(values.values())
+    if total == 0:
+        return {}
+    return {t: v / total for t, v in values.items()}

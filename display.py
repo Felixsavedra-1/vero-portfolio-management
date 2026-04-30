@@ -7,7 +7,6 @@ Pure functions — no I/O, no side effects.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional
 
 from ledger import Holding, Transaction
 
@@ -38,20 +37,20 @@ def _div(width: int) -> str:
     return '─' * width
 
 
-def _has_price(ticker: str, prices: Dict[str, float], h: Holding) -> bool:
+def _has_price(ticker: str, prices: dict[str, float], h: Holding) -> bool:
     return ticker in prices and math.isfinite(prices[ticker]) and h.shares > 0
 
 
 def render_holdings(
-    holdings: Dict[str, Holding],
-    prices: Dict[str, float],
+    holdings: dict[str, Holding],
+    prices: dict[str, float],
 ) -> str:
     if not holdings:
         return '\n  No holdings yet. Run: portfolio buy TICKER DOLLARS\n'
 
     # Pre-compute market values so weights are fractions of the true total,
     # not of an incomplete running sum.
-    market_values: Dict[str, float] = {
+    market_values: dict[str, float] = {
         ticker: h.shares * prices[ticker]
         for ticker, h in holdings.items()
         if _has_price(ticker, prices, h)
@@ -59,7 +58,7 @@ def render_holdings(
     total_value    = sum(market_values.values())
     total_invested = sum(h.cost for h in holdings.values())
 
-    lines: List[str] = [
+    lines: list[str] = [
         '',
         _div(_W_HOLDINGS),
         f"  {'Ticker':<10} {'Name':<22} {'Shares':>9}  {'Avg $':>9}  "
@@ -108,12 +107,12 @@ def render_holdings(
 
 
 def render_gains(
-    transactions: List[Transaction],
-    holdings: Dict[str, Holding],
-    prices: Dict[str, float],
-    ticker: Optional[str] = None,
+    transactions: list[Transaction],
+    holdings: dict[str, Holding],
+    prices: dict[str, float],
+    ticker: str | None = None,
 ) -> str:
-    lines: List[str] = ['']
+    lines: list[str] = ['']
 
     filter_label = f' — {ticker}' if ticker else ''
 
@@ -206,9 +205,9 @@ def render_gains(
 
 
 def render_history(
-    transactions: List[Transaction],
-    ticker: Optional[str] = None,
-    limit: Optional[int] = None,
+    transactions: list[Transaction],
+    ticker: str | None = None,
+    limit: int | None = None,
 ) -> str:
     rows = list(reversed(transactions))
 
@@ -222,7 +221,7 @@ def render_history(
     if limit:
         rows = rows[:limit]
 
-    lines: List[str] = [
+    lines: list[str] = [
         '',
         _div(_W_HISTORY),
         f"  {'Timestamp':<22} {'Action':<6} {'Ticker':<10} {'Shares':>9}  "

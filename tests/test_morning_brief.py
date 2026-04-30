@@ -6,11 +6,6 @@ are made. Test holdings use the actual portfolio tickers to keep things
 unambiguous.
 """
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 import numpy as np
 import pandas as pd
 import pytest

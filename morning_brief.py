@@ -5,9 +5,10 @@ Usage:
     python morning_brief.py
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import date, datetime
-from typing import Dict, FrozenSet, List, Optional
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -36,9 +37,9 @@ from display import _pct as _display_pct
 from ledger import (
     Holding, SavingsAccount, Transaction,
     _payment_dates, accrued_interest, projected_next_payment,
-    cost_basis_weights, load_holdings, load_savings, load_transactions,
+    load_holdings, load_savings, load_transactions,
 )
-from metrics import momentum_signal, risk_snapshot as _compute_risk_snapshot
+from metrics import cost_basis_weights, momentum_signal, risk_snapshot as _compute_risk_snapshot
 from prices import yf_warnings
 
 logger = logging.getLogger(__name__)
@@ -62,28 +63,27 @@ class MorningBrief:
 
     def __init__(
         self,
-        holdings: Dict[str, Holding],
-        indices: Dict[str, str],
+        holdings: dict[str, Holding],
+        indices: dict[str, str],
         benchmark: str = BENCHMARK,
         risk_free_rate: float = RISK_FREE_RATE,
-        watchlist: Optional[Dict[str, str]] = None,
-        mutual_funds: Optional[FrozenSet[str]] = None,
-        savings: Optional[List[SavingsAccount]] = None,
-        transactions: Optional[List[Transaction]] = None,
+        watchlist: dict[str, str] | None = None,
+        mutual_funds: frozenset[str] | None = None,
+        savings: list[SavingsAccount] | None = None,
+        transactions: list[Transaction] | None = None,
     ) -> None:
         self.holdings       = holdings
         self.indices        = indices
         self.benchmark      = benchmark
         self.risk_free_rate = risk_free_rate
-        self.watchlist:      Dict[str, str]       = watchlist or {}
-        self.mutual_funds:   FrozenSet[str]       = mutual_funds or frozenset()
+        self.watchlist:      dict[str, str]       = watchlist or {}
+        self.mutual_funds:   frozenset[str]       = mutual_funds or frozenset()
         self._savings:       list[SavingsAccount] = savings or []
         self._transactions:  list[Transaction]    = transactions or []
         self._prices:        pd.DataFrame         = pd.DataFrame()
 
     def fetch(self) -> None:
         """
-        Single yfinance call batching all tickers: holdings, indices, benchmark.
         Starts from Dec 28 of the prior year to capture the YTD baseline close,
         and from the earliest holding start_date to cover full portfolio history.
         """
@@ -117,11 +117,7 @@ class MorningBrief:
         self._prices = close
 
     def _period_return(self, ticker: str, n_trading_days: int) -> float:
-        """
-        Close-to-close return over the last n trading days.
-        Uses the last n+1 data points, so calendar gaps (weekends, holidays)
-        do not inflate the window.
-        """
+        """Uses the last n+1 data points so calendar gaps don't inflate the window."""
         if ticker not in self._prices.columns:
             return float('nan')
         s = self._prices[ticker].dropna()
@@ -156,11 +152,7 @@ class MorningBrief:
         return f'as of {last.strftime("%b %-d")}'
 
     def _portfolio_return_series(self) -> pd.Series:
-        """
-        Cost-basis-weighted daily return series.
-        dropna(how='any') aligns to equity trading days, excluding
-        BTC weekend sessions for consistent risk calculations.
-        """
+        """dropna(how='any') aligns to equity trading days, excluding BTC weekend sessions."""
         weights = cost_basis_weights(self.holdings)
         cols    = [t for t in weights if t in self._prices.columns]
         if not cols:
@@ -171,7 +163,7 @@ class MorningBrief:
         w      /= w.sum()
         return daily.mul(w, axis=1).sum(axis=1)
 
-    def _risk_snapshot(self) -> Dict:
+    def _risk_snapshot(self) -> dict:
         return _compute_risk_snapshot(
             self._portfolio_return_series(),
             self.risk_free_rate,
@@ -185,7 +177,7 @@ class MorningBrief:
         s = self._prices[ticker].dropna()
         return float(s.iloc[-1]) if not s.empty else float('nan')
 
-    def latest_prices(self) -> Dict[str, float]:
+    def latest_prices(self) -> dict[str, float]:
         """Most-recent close per holding ticker. Tickers with no data are omitted."""
         return {
             t: float(self._prices[t].dropna().iloc[-1])
@@ -193,7 +185,7 @@ class MorningBrief:
             if t in self._prices.columns and not self._prices[t].dropna().empty
         }
 
-    def previous_prices(self) -> Dict[str, float]:
+    def previous_prices(self) -> dict[str, float]:
         """Penultimate close per holding ticker (for day-change). Tickers with <2 obs omitted."""
         return {
             t: float(self._prices[t].dropna().iloc[-2])
@@ -326,7 +318,7 @@ class MorningBrief:
 
     def _render_holding_rows(self, current_value: float) -> tuple:
         """Per-holding rows. Returns (total_dollar_pnl, weighted return components)."""
-        components: Dict[str, list] = {'1d': [], '1w': [], '1m': [], 'ytd': []}
+        components: dict[str, list] = {'1d': [], '1w': [], '1m': [], 'ytd': []}
         total_dollar_pnl = 0.0
 
         for ticker, h in self.holdings.items():

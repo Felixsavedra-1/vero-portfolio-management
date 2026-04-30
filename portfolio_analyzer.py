@@ -20,7 +20,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,8 +28,8 @@ import seaborn as sns
 import yfinance as yf
 
 from config import BENCHMARK, DATA_DIR, HOLDINGS_FILE, RISK_FREE_RATE, TRADING_DAYS_PER_YEAR, TRANSACTION_COST
-from ledger import cost_basis_weights, load_holdings
-from metrics import annualized_sharpe, max_drawdown, sharpe_ci
+from ledger import load_holdings
+from metrics import annualized_sharpe, cost_basis_weights, max_drawdown, sharpe_ci
 from prices import yf_warnings
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ class AssetMetrics:
     annual_return_arithmetic: float
     annual_volatility:        float
     sharpe_ratio:             float
-    sharpe_ci:                Tuple[float, float]  # (low, high), Lo (2002) 95% CI
+    sharpe_ci:                tuple[float, float]  # (low, high), Lo (2002) 95% CI
     total_return:             float
     max_drawdown:             float
     cumulative_returns:       pd.Series            # held for plotting
@@ -68,12 +67,12 @@ class AnalysisResult:
     """Everything print_results and plot_dashboard need — the full analysis frozen."""
     portfolio:         AssetMetrics
     benchmark:         AssetMetrics
-    individual_assets: Dict[str, AssetMetrics]
-    weights:           Dict[str, float]
+    individual_assets: dict[str, AssetMetrics]
+    weights:           dict[str, float]
     benchmark_ticker:  str
     risk_free_rate:    float
     transaction_cost:  float
-    rolling:           Optional[RollingMetrics] = field(default=None)
+    rolling:           RollingMetrics | None = field(default=None)
 
 
 # ── Pure compute ──────────────────────────────────────────────────────────────
@@ -131,16 +130,13 @@ def compute_rolling_metrics(
 
 def compute_analysis(
     returns: pd.DataFrame,
-    weights: Dict[str, float],
+    weights: dict[str, float],
     benchmark: str,
     risk_free_rate: float,
     transaction_cost: float = 0.0,
-    rolling_window: Optional[int] = TRADING_DAYS_PER_YEAR,
+    rolling_window: int | None = TRADING_DAYS_PER_YEAR,
 ) -> AnalysisResult:
-    """
-    Compute the full analysis from already-aligned daily returns. Pure.
-
-    `returns` must have one column per portfolio ticker plus the benchmark column,
+    """`returns` must have one column per portfolio ticker plus the benchmark column,
     indexed by date with no missing values (use `PortfolioAnalyzer.fetch_returns`
     or align upstream).
     """
@@ -344,7 +340,7 @@ def _plot_drawdown(ax, result: AnalysisResult) -> None:
 
 
 def plot_dashboard(result: AnalysisResult, output_path: Path) -> Path:
-    """Render the 6-panel dashboard PNG. Pure: depends only on `result` and `output_path`."""
+    """Pure render — depends only on result and output_path."""
     sns.set_theme(style="whitegrid")
     fig, axes = plt.subplots(3, 2, figsize=(16, 18))
     fig.suptitle('Vero — Analysis Dashboard', fontsize=16, fontweight='bold')
@@ -368,12 +364,11 @@ def plot_dashboard(result: AnalysisResult, output_path: Path) -> Path:
 # ── Coordinator ───────────────────────────────────────────────────────────────
 
 class PortfolioAnalyzer:
-    """Validates inputs, fetches & aligns prices, hands off to the pure compute layer."""
 
     def __init__(self,
-                 weights: Dict[str, float],
-                 start_date:       Optional[Union[str, datetime]] = None,
-                 end_date:         Optional[Union[str, datetime]] = None,
+                 weights: dict[str, float],
+                 start_date:       str | datetime | None = None,
+                 end_date:         str | datetime | None = None,
                  benchmark:        str   = BENCHMARK,
                  risk_free_rate:   float = RISK_FREE_RATE,
                  transaction_cost: float = TRANSACTION_COST):
@@ -386,10 +381,10 @@ class PortfolioAnalyzer:
     # — Normalizers (pure, static) —
 
     @staticmethod
-    def _normalize_portfolio(raw: Dict[str, float]) -> Dict[str, float]:
+    def _normalize_portfolio(raw: dict[str, float]) -> dict[str, float]:
         if not raw:
             raise ValueError("Portfolio is empty. Provide at least one ticker with a weight.")
-        cleaned: Dict[str, float] = {}
+        cleaned: dict[str, float] = {}
         for ticker, raw_weight in raw.items():
             t = str(ticker).strip().upper()
             if not t:
@@ -411,7 +406,7 @@ class PortfolioAnalyzer:
         return cleaned
 
     @staticmethod
-    def _normalize_benchmark(benchmark: str, weights: Dict[str, float]) -> str:
+    def _normalize_benchmark(benchmark: str, weights: dict[str, float]) -> str:
         if not isinstance(benchmark, str):
             raise ValueError("Benchmark ticker must be a string.")
         b = benchmark.strip().upper()
@@ -423,9 +418,9 @@ class PortfolioAnalyzer:
 
     @staticmethod
     def _resolve_date_range(
-        start: Optional[Union[str, datetime]],
-        end:   Optional[Union[str, datetime]],
-    ) -> Tuple[str, str]:
+        start: str | datetime | None,
+        end:   str | datetime | None,
+    ) -> tuple[str, str]:
         end_dt   = PortfolioAnalyzer._coerce_date(end,   default=datetime.now())
         start_dt = PortfolioAnalyzer._coerce_date(start, default=end_dt - timedelta(days=365 * 3))
         if start_dt >= end_dt:
@@ -433,7 +428,7 @@ class PortfolioAnalyzer:
         return start_dt.strftime('%Y-%m-%d'), end_dt.strftime('%Y-%m-%d')
 
     @staticmethod
-    def _coerce_date(value: Optional[Union[str, datetime]], default: datetime) -> datetime:
+    def _coerce_date(value: str | datetime | None, default: datetime) -> datetime:
         if value is None:
             return default
         if isinstance(value, datetime):

@@ -5,26 +5,21 @@ All tests are network-free. Disk I/O uses pytest's tmp_path fixture.
 """
 
 import json
-import sys
-from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ledger import (
     Holding,
     SavingsAccount,
     Transaction,
     append_transaction,
-    cost_basis_weights,
     load_holdings,
     load_savings,
     load_transactions,
-    market_value_weights,
     save_holdings,
     save_savings,
 )
+from metrics import cost_basis_weights, market_value_weights
 
 
 # ── Fixtures ────────────────────────────────────────────────────────────────────

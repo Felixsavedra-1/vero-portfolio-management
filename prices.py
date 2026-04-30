@@ -5,15 +5,18 @@ The only module in this project that calls yfinance.
 All other modules receive price data as plain dicts.
 """
 
+from __future__ import annotations
+
 import json
+import logging
 import os
 import re
 import sys
 import warnings
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import date, timedelta, datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterator, List
 
 import pandas as pd
 import yfinance as yf
@@ -96,6 +99,17 @@ def _last_close(series: pd.Series, label: str) -> float:
     return float(s.iloc[-1])
 
 
+def _close_frame(data: pd.DataFrame, tickers: list[str]) -> pd.DataFrame:
+    """Normalize a yfinance download to a DataFrame with ticker-named columns."""
+    if isinstance(data.columns, pd.MultiIndex):
+        close = data['Close']
+    else:
+        close = data[['Close']].rename(columns={'Close': tickers[0]})
+    if isinstance(close, pd.Series):
+        close = close.to_frame(name=tickers[0])
+    return close
+
+
 def fetch_price(ticker: str) -> float:
     with yf_warnings():
         data = yf.download(ticker, period='5d', progress=False, auto_adjust=True)
@@ -112,7 +126,7 @@ def fetch_price(ticker: str) -> float:
     return _last_close(close, f"'{ticker}'")
 
 
-def fetch_prices_batch(tickers: List[str]) -> Dict[str, float]:
+def fetch_prices_batch(tickers: list[str]) -> dict[str, float]:
     """Batch close prices. Tickers that fail fetch are silently omitted."""
     if not tickers:
         return {}
@@ -123,15 +137,7 @@ def fetch_prices_batch(tickers: List[str]) -> Dict[str, float]:
     if data.empty:
         return {}
 
-    if isinstance(data.columns, pd.MultiIndex):
-        close = data['Close']
-    else:
-        # Single-ticker call: yfinance returns a flat column index. Name the
-        # 'Close' column after the ticker so downstream lookup by ticker works.
-        close = data[['Close']].rename(columns={'Close': tickers[0]})
-    if isinstance(close, pd.Series):
-        close = close.to_frame(name=tickers[0])
-
+    close = _close_frame(data, tickers)
     last = close.ffill().iloc[-1]
     prices = {
         t: float(last[t])
@@ -140,7 +146,7 @@ def fetch_prices_batch(tickers: List[str]) -> Dict[str, float]:
     }
     missing = [t for t in tickers if t not in prices]
     if missing:
-        print(f"  Warning: price unavailable for {', '.join(missing)}", file=sys.stderr)
+        logging.warning("price unavailable for %s", ', '.join(missing))
     return prices
 
 
@@ -175,7 +181,7 @@ def fetch_label(ticker: str) -> str:
         return ticker
 
 
-def fetch_prices_with_change(tickers: List[str]) -> Dict[str, Dict[str, float]]:
+def fetch_prices_with_change(tickers: list[str]) -> dict[str, dict[str, float]]:
     """
     Returns {ticker: {"price": float, "prev_close": float}} in one network call.
     prev_close is the previous trading day's close, used for day-change calculations.
@@ -189,12 +195,8 @@ def fetch_prices_with_change(tickers: List[str]) -> Dict[str, Dict[str, float]]:
     if data.empty:
         return {}
 
-    close = data['Close'] if isinstance(data.columns, pd.MultiIndex) else data[['Close']]
-    if isinstance(close, pd.Series):
-        close = close.to_frame(name=tickers[0])
-
-    close = close.ffill()
-    result: Dict[str, Dict[str, float]] = {}
+    close = _close_frame(data, tickers).ffill()
+    result: dict[str, dict[str, float]] = {}
     for t in tickers:
         if t not in close.columns:
             continue
@@ -208,7 +210,7 @@ def fetch_prices_with_change(tickers: List[str]) -> Dict[str, Dict[str, float]]:
     return result
 
 
-def fetch_watchlist_history(tickers: List[str]) -> Dict[str, Dict[str, List[float]]]:
+def fetch_watchlist_history(tickers: list[str]) -> dict[str, dict[str, list[float]]]:
     """
     Returns {ticker: {"1W": [...], "1M": [...], "3M": [...], "6M": [...], "YTD": [...]}}
     Each list is daily closing prices, oldest to newest. Single network call.
@@ -222,14 +224,11 @@ def fetch_watchlist_history(tickers: List[str]) -> Dict[str, Dict[str, List[floa
     if data.empty:
         return {}
 
-    close = data['Close'] if isinstance(data.columns, pd.MultiIndex) else data[['Close']]
-    if isinstance(close, pd.Series):
-        close = close.to_frame(name=tickers[0])
-
+    close = _close_frame(data, tickers)
     today      = date.today()
     ytd_cutoff = pd.Timestamp(date(today.year, 1, 1))
 
-    result: Dict[str, Dict[str, List[float]]] = {}
+    result: dict[str, dict[str, list[float]]] = {}
     for ticker in tickers:
         if ticker not in close.columns:
             continue
@@ -250,13 +249,13 @@ def fetch_watchlist_history(tickers: List[str]) -> Dict[str, Dict[str, List[floa
     return result
 
 
-def fetch_watchlist_info(tickers: List[str]) -> Dict[str, Dict[str, str]]:
+def fetch_watchlist_info(tickers: list[str]) -> dict[str, dict[str, str]]:
     """
     Returns {ticker: {"description": str, "sector": str}} for each ticker.
     Descriptions are rewritten by Claude for concision and cached for 30 days.
     """
     cache  = _load_desc_cache()
-    result: Dict[str, Dict[str, str]] = {}
+    result: dict[str, dict[str, str]] = {}
     dirty  = False
 
     with yf_warnings():

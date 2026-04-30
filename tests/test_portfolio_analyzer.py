@@ -1,19 +1,16 @@
 import os
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from config import TRADING_DAYS_PER_YEAR
 from portfolio_analyzer import (
     AnalysisResult,
     AssetMetrics,
     PortfolioAnalyzer,
-    TRADING_DAYS_PER_YEAR,
     compute_analysis,
     compute_asset_metrics,
 )

@@ -4,12 +4,7 @@ tests/test_display.py — Unit tests for display.py.
 All tests inject static data structures — no network, no disk.
 """
 
-import sys
-from pathlib import Path
-
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from display import render_gains, render_history, render_holdings
 from ledger import Holding, Transaction

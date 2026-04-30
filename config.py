@@ -5,8 +5,9 @@ Edit this file to set your watchlist, benchmark, and risk parameters.
 Your actual holdings are managed via the portfolio CLI, not this file.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, FrozenSet
 
 # ── Data storage ───────────────────────────────────────────────────────────────
 
@@ -19,12 +20,12 @@ GOALS_FILE:        Path = DATA_DIR / 'goals.json'
 # ── Your watchlist ─────────────────────────────────────────────────────────────
 # Tickers shown in the morning brief with 1D / 1W / 1M returns and a momentum signal.
 
-WATCHLIST: Dict[str, str] = {}
+WATCHLIST: dict[str, str] = {}
 
 # ── Mutual funds ───────────────────────────────────────────────────────────────
 # NAV is struck once daily after 4 PM ET — flagged with (*) in the brief.
 
-MUTUAL_FUNDS: FrozenSet[str] = frozenset()
+MUTUAL_FUNDS: frozenset[str] = frozenset()
 
 # ── Benchmark ──────────────────────────────────────────────────────────────────
 # The benchmark ticker must not appear in your holdings.
@@ -60,7 +61,7 @@ BRIEF_TIMEZONE: str = 'America/New_York'
 # ── Global market indices ──────────────────────────────────────────────────────
 # Prices are in each index's local currency.
 
-GLOBAL_INDICES: Dict[str, str] = {
+GLOBAL_INDICES: dict[str, str] = {
     # Americas
     'S&P 500    (US)':        '^GSPC',
     'TSX        (Canada)':    '^GSPTSE',

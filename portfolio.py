@@ -13,10 +13,12 @@ Usage
 Data is stored in ~/.portfolio/
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
+from collections.abc import Callable
 from datetime import date, datetime
-from typing import Callable, Optional
 from zoneinfo import ZoneInfo
 
 from config import BRIEF_TIMEZONE, GOALS_FILE, HOLDINGS_FILE, INTEREST_PAYMENT_DAY, SAVINGS_FILE, TRANSACTIONS_FILE
@@ -32,7 +34,7 @@ from prices import PriceFetchError, fetch_historical_price, fetch_label, fetch_p
 EPSILON = 1e-9
 
 
-def _trade_ts(date_str: Optional[str]) -> str:
+def _trade_ts(date_str: str | None) -> str:
     return f'{date_str}T12:00:00.000000' if date_str else datetime.now(ZoneInfo(BRIEF_TIMEZONE)).isoformat()
 
 
@@ -51,7 +53,7 @@ def _parse_date(date_str: str) -> str:
     return date_str
 
 
-def _resolve_price(ticker: str, explicit: Optional[float], date_str: Optional[str] = None) -> float:
+def _resolve_price(ticker: str, explicit: float | None, date_str: str | None = None) -> float:
     if explicit is not None:
         return explicit
     if date_str is not None:
@@ -160,7 +162,6 @@ def cmd_sell(args: argparse.Namespace) -> None:
             f'To sell everything: portfolio sell {ticker} {h.shares * price:.2f}'
         )
 
-    # Average-cost method: reduce cost basis proportionally to shares sold.
     cost_sold    = round((shares / h.shares) * h.cost, 2)
     realized_pnl = round(dollars - cost_sold, 2)
 

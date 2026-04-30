@@ -23,11 +23,7 @@ ANALYSIS_PNG = DATA_DIR / "portfolio_analysis.png"
 
 
 def _compute_signal(history: dict, flat_band: float) -> dict:
-    """
-    Reconstructs the three horizon returns from cached price arrays, then
-    delegates to the shared classifier in metrics.py. Dashboard has no
-    daily-resolution feed, so 1D is approximated by the last two 1W closes.
-    """
+    """Dashboard has no daily-resolution feed; 1D is approximated by the last two 1W closes."""
     p1m = history.get('1M', [])
     p1w = history.get('1W', [])
 
@@ -44,7 +40,6 @@ def _build_holdings_data(
     prev_prices: dict,
     holding_history: dict | None = None,
 ) -> tuple:
-    """Returns (holding_rows, portfolio_value, total_cost)."""
     rows = []
     portfolio_value = 0.0
     total_cost = 0.0
@@ -88,7 +83,6 @@ def _build_holdings_data(
 
 
 def _build_savings_data(savings_acc: list, today_d: date) -> tuple:
-    """Returns (savings_rows, savings_total, total_accrued)."""
     rows = []
     savings_total = 0.0
     total_accrued = 0.0
@@ -117,7 +111,6 @@ def _build_savings_data(savings_acc: list, today_d: date) -> tuple:
 
 
 def _build_watchlist_data() -> list:
-    """Returns watchlist_rows. Makes its own fetch calls."""
     if not WATCHLIST:
         return []
     wl_tickers = list(WATCHLIST.keys())
