@@ -5,6 +5,7 @@ All tests are network-free. Disk I/O uses pytest's tmp_path fixture.
 """
 
 import json
+from datetime import date
 
 import pytest
 
@@ -12,10 +13,15 @@ from ledger import (
     Holding,
     SavingsAccount,
     Transaction,
+    _payment_dates,
+    accrued_interest,
     append_transaction,
+    load_goals,
     load_holdings,
     load_savings,
     load_transactions,
+    projected_next_payment,
+    save_goals,
     save_holdings,
     save_savings,
 )
@@ -304,3 +310,68 @@ class TestMarketValueWeights:
     def test_zero_shares_excluded(self):
         holdings = {'A': Holding('A', 0.0, 0.0, '2026-01-01', 'A')}
         assert market_value_weights(holdings, {'A': 100.0}) == {}
+
+
+# ── Payment dates ────────────────────────────────────────────────────────────────
+
+class TestPaymentDates:
+    def test_today_is_payment_day(self):
+        last, next_ = _payment_dates(15, date(2025, 3, 15))
+        assert last  == date(2025, 3, 15)
+        assert next_ == date(2025, 4, 15)
+
+    def test_before_payment_day(self):
+        last, next_ = _payment_dates(15, date(2025, 3, 10))
+        assert last  == date(2025, 2, 15)
+        assert next_ == date(2025, 3, 15)
+
+    def test_after_payment_day(self):
+        last, next_ = _payment_dates(15, date(2025, 3, 20))
+        assert last  == date(2025, 3, 15)
+        assert next_ == date(2025, 4, 15)
+
+    def test_december_wraps_to_january(self):
+        last, next_ = _payment_dates(15, date(2025, 12, 20))
+        assert last  == date(2025, 12, 15)
+        assert next_ == date(2026, 1, 15)
+
+    def test_january_before_payment_wraps_to_december(self):
+        last, next_ = _payment_dates(15, date(2025, 1, 5))
+        assert last  == date(2024, 12, 15)
+        assert next_ == date(2025, 1, 15)
+
+    def test_clamps_to_month_end_in_february(self):
+        last, next_ = _payment_dates(31, date(2025, 2, 15))
+        assert last  == date(2025, 1, 31)
+        assert next_ == date(2025, 2, 28)
+
+
+# ── Accrued interest ─────────────────────────────────────────────────────────────
+
+class TestAccruedInterest:
+    # balance=36_500, apy=0.10 → daily rate = 36500 * 0.10 / 365 = $10/day
+    def _acct(self):
+        return SavingsAccount(name='T', balance=36_500.0, apy=0.10, bank='')
+
+    def test_zero_days_on_payment_day(self):
+        assert accrued_interest(self._acct(), 15, date(2025, 3, 15)) == pytest.approx(0.0)
+
+    def test_ten_days_accrued(self):
+        assert accrued_interest(self._acct(), 15, date(2025, 3, 25)) == pytest.approx(100.0)
+
+    def test_projected_full_cycle(self):
+        # Mar 15 → Apr 15 = 31 days × $10/day = $310
+        assert projected_next_payment(self._acct(), 15, date(2025, 3, 20)) == pytest.approx(310.0)
+
+
+# ── Goals I/O ────────────────────────────────────────────────────────────────────
+
+class TestGoalsIO:
+    def test_roundtrip(self, tmp_path):
+        path  = tmp_path / 'goals.json'
+        goals = {'__portfolio__': 100_000.0, '__savings__': 50_000.0}
+        save_goals(goals, path)
+        assert load_goals(path) == goals
+
+    def test_missing_file_returns_empty(self, tmp_path):
+        assert load_goals(tmp_path / 'nope.json') == {}

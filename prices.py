@@ -45,7 +45,10 @@ def _is_cache_fresh(entry: dict) -> bool:
     ts = entry.get('cached_at')
     if not ts:
         return False
-    age = (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).days
+    dt = datetime.fromisoformat(ts)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    age = (datetime.now(timezone.utc) - dt).days
     return age < _DESC_CACHE_TTL_DAYS
 
 
@@ -105,8 +108,6 @@ def _close_frame(data: pd.DataFrame, tickers: list[str]) -> pd.DataFrame:
         close = data['Close']
     else:
         close = data[['Close']].rename(columns={'Close': tickers[0]})
-    if isinstance(close, pd.Series):
-        close = close.to_frame(name=tickers[0])
     return close
 
 

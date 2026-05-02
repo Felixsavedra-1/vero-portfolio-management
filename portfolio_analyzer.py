@@ -85,7 +85,7 @@ def compute_asset_metrics(returns: pd.Series, risk_free_rate: float) -> AssetMet
     cumulative   = (1 + returns).cumprod()
     total_return = float(cumulative.iloc[-1] - 1)
     num_years    = len(returns) / TRADING_DAYS_PER_YEAR
-    if num_years > 0 and total_return > -1:
+    if num_years > 0 and total_return >= -1:
         cagr = (1 + total_return) ** (1 / num_years) - 1
     else:
         cagr = float('nan')
@@ -161,7 +161,7 @@ def compute_analysis(
 
     rolling = (
         compute_rolling_metrics(portfolio_returns, benchmark_returns, risk_free_rate, rolling_window)
-        if rolling_window else None
+        if rolling_window is not None and rolling_window > 0 else None
     )
 
     return AnalysisResult(

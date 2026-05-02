@@ -31,7 +31,8 @@ from ledger import (
 )
 from prices import PriceFetchError, fetch_historical_price, fetch_label, fetch_price, fetch_prices_batch
 
-EPSILON = 1e-9
+EPSILON        = 1e-9
+SHARE_DECIMALS = 10
 
 
 def _trade_ts(date_str: str | None) -> str:
@@ -94,7 +95,7 @@ def cmd_buy(args: argparse.Namespace, prompt: Callable[[str], str] = input) -> N
     except PriceFetchError as e:
         sys.exit(str(e))
 
-    shares    = round(dollars / price, 10)
+    shares    = round(dollars / price, SHARE_DECIMALS)
     timestamp = _trade_ts(date_str)
 
     if is_new:
@@ -154,7 +155,7 @@ def cmd_sell(args: argparse.Namespace) -> None:
     except PriceFetchError as e:
         sys.exit(str(e))
 
-    shares = round(dollars / price, 10)
+    shares = round(dollars / price, SHARE_DECIMALS)
 
     if shares > h.shares + EPSILON:
         sys.exit(
@@ -169,7 +170,7 @@ def cmd_sell(args: argparse.Namespace) -> None:
     h.cost    -= cost_sold
     timestamp  = _trade_ts(date_str)
 
-    if h.shares < EPSILON:
+    if abs(h.shares) < EPSILON:
         del holdings[ticker]
         status = 'position closed'
     else:

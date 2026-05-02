@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from display import _pct
 from ledger import Holding, SavingsAccount
 from morning_brief import MorningBrief
 
@@ -172,13 +173,13 @@ class TestRiskSnapshot:
 
 class TestFormatHelpers:
     def test_pct_positive(self):
-        assert MorningBrief._pct(0.0110) == '+1.10%'
+        assert _pct(0.0110) == '+1.10%'
 
     def test_pct_negative(self):
-        assert MorningBrief._pct(-0.032) == '-3.20%'
+        assert _pct(-0.032) == '-3.20%'
 
     def test_pct_nan(self):
-        assert MorningBrief._pct(float('nan')) == 'n/a'
+        assert _pct(float('nan')) == 'n/a'
 
     def test_dollar_positive(self):
         assert MorningBrief._dollar(5.5) == '+$5.50'

@@ -22,7 +22,7 @@ def annualized_sharpe(returns: pd.Series, risk_free_rate: float) -> float:
     return (annual_ret - risk_free_rate) / annual_vol
 
 
-def sharpe_ci(returns: pd.Series, sharpe: float, alpha: float = 0.05) -> tuple:
+def sharpe_ci(returns: pd.Series, sharpe: float, alpha: float = 0.05) -> tuple[float, float]:
     """Lo (2002) asymptotic CI. SE = sqrt((1 + SR²/2) / T) where T = days/252."""
     n = len(returns)
     if n < 2 or not np.isfinite(sharpe):
@@ -45,7 +45,7 @@ def momentum_signal(
     r1w: float,
     r1m: float,
     flat_band: float,
-) -> tuple:
+) -> tuple[str, str]:
     """
     Three-horizon momentum classifier. Single source of truth — both the morning
     brief and the dashboard call this.

@@ -48,14 +48,12 @@ def _build_holdings_data(
         total_cost += h.cost
         price = prices.get(ticker)
         if price is None:
-            # No valid price — use cost basis to avoid corrupting the portfolio total
-            portfolio_value += h.cost
             rows.append({
                 "ticker": ticker, "label": h.label,
                 "shares": round(h.shares, 4), "cost": round(h.cost, 2),
-                "price": 0.0, "value": round(h.cost, 2),
-                "gain_pct": 0.0, "gain_dollar": 0.0,
-                "day_change_dollar": 0.0, "day_change_pct": 0.0,
+                "price": None, "value": None,
+                "gain_pct": None, "gain_dollar": None,
+                "day_change_dollar": None, "day_change_pct": None,
                 "history_1m": history.get(ticker, {}).get('1M', []),
             })
             continue
@@ -149,7 +147,7 @@ def build_payload(prices: dict | None = None, prev_prices: dict | None = None) -
 
     holding_history = fetch_watchlist_history(tickers) if tickers else {}
     holding_rows, portfolio_value, total_cost = _build_holdings_data(holdings, prices, prev_prices, holding_history)
-    holding_rows.sort(key=lambda r: r["value"], reverse=True)
+    holding_rows.sort(key=lambda r: r["value"] if r["value"] is not None else -1.0, reverse=True)
 
     savings_rows, savings_total, total_accrued = _build_savings_data(savings_acc, date.today())
 

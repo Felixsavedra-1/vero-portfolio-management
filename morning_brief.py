@@ -8,6 +8,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+import webbrowser
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
@@ -33,7 +34,7 @@ from config import (
     WATCHLIST,
 )
 import dashboard as _dashboard
-from display import _pct as _display_pct
+from display import _pct
 from ledger import (
     Holding, SavingsAccount, Transaction,
     _payment_dates, accrued_interest, projected_next_payment,
@@ -110,11 +111,7 @@ class MorningBrief:
         if raw.empty:
             raise ValueError("No data returned. Check your network connection or ticker symbols.")
 
-        close = raw['Close'] if isinstance(raw.columns, pd.MultiIndex) else raw[['Close']]
-        if isinstance(close, pd.Series):
-            close = close.to_frame()
-
-        self._prices = close
+        self._prices = raw['Close'] if isinstance(raw.columns, pd.MultiIndex) else raw[['Close']]
 
     def _period_return(self, ticker: str, n_trading_days: int) -> float:
         """Uses the last n+1 data points so calendar gaps don't inflate the window."""
@@ -206,10 +203,6 @@ class MorningBrief:
         if not np.isfinite(val):
             return ' '
         return f'{_GREEN}▲{_RESET}' if val >= 0 else f'{_RED}▼{_RESET}'
-
-    @staticmethod
-    def _pct(val: float) -> str:
-        return _display_pct(val)
 
     @staticmethod
     def _dollar(val: float) -> str:
@@ -309,7 +302,7 @@ class MorningBrief:
         print(f'  {self._DIV}')
         print(
             f"  {'Portfolio':<9} {'—':>9}  {'—':>4}  {self._dollar(total_dollar_pnl):>9}  "
-            f'{self._pct(p1d):>8}  {self._pct(p1w):>8}  {self._pct(p1m):>8}  {self._pct(pytd):>8}'
+            f'{_pct(p1d):>8}  {_pct(p1w):>8}  {_pct(p1m):>8}  {_pct(pytd):>8}'
         )
         self._render_benchmark_alpha(p1d, p1w, p1m, pytd)
 
@@ -335,13 +328,13 @@ class MorningBrief:
                 total_dollar_pnl += dollar
 
             weight     = pos_value / current_value if np.isfinite(pos_value) and current_value > 0 else float('nan')
-            weight_str = self._pct(weight) if np.isfinite(weight) else 'n/a'
+            weight_str = _pct(weight) if np.isfinite(weight) else 'n/a'
             flag       = ' *' if ticker in self.mutual_funds else '  '
 
             print(
                 f'  {ticker:<9} {price_str:>9}  {weight_str:>4}  '
                 f'{self._dollar(dollar):>9}  '
-                f'{self._pct(r1d):>8}  {self._pct(r1w):>8}  {self._pct(r1m):>8}  {self._pct(rytd):>8}'
+                f'{_pct(r1d):>8}  {_pct(r1w):>8}  {_pct(r1m):>8}  {_pct(rytd):>8}'
                 f'{flag}'
             )
 
@@ -350,7 +343,7 @@ class MorningBrief:
             mkt_str  = f'${pos_value:,.2f}'
             cost_str = f'${h.cost:,.2f}'
             gain_str = self._dollar(gain_dollar)
-            pct_str  = self._pct(gain_pct)
+            pct_str  = _pct(gain_pct)
             print(f'            mkt {mkt_str}  ·  cost {cost_str}  ·  gain {gain_str} ({pct_str})')
 
             for key, val in [('1d', r1d), ('1w', r1w), ('1m', r1m), ('ytd', rytd)]:
@@ -372,12 +365,12 @@ class MorningBrief:
 
         print(
             f"  {'S&P 500':<9} {'—':>9}  {'—':>4}  {'—':>9}  "
-            f'{self._pct(b1d):>8}  {self._pct(b1w):>8}  {self._pct(b1m):>8}  {self._pct(bytd):>8}'
+            f'{_pct(b1d):>8}  {_pct(b1w):>8}  {_pct(b1m):>8}  {_pct(bytd):>8}'
         )
         print(
             f"  {'Alpha':<9} {'—':>9}  {'—':>4}  {'—':>9}  "
-            f'{self._pct(alpha(p1d, b1d)):>8}  {self._pct(alpha(p1w, b1w)):>8}  '
-            f'{self._pct(alpha(p1m, b1m)):>8}  {self._pct(alpha(pytd, bytd)):>8}'
+            f'{_pct(alpha(p1d, b1d)):>8}  {_pct(alpha(p1w, b1w)):>8}  '
+            f'{_pct(alpha(p1m, b1m)):>8}  {_pct(alpha(pytd, bytd)):>8}'
         )
 
     def _render_watchlist(self) -> None:
@@ -394,7 +387,7 @@ class MorningBrief:
             price_str = f'${price:,.2f}' if np.isfinite(price) else 'n/a'
             print(
                 f'  {label:<20} {ticker:<6} {price_str:>9}  '
-                f'{self._pct(r1d):>8}  {self._pct(r1w):>8}  {self._pct(r1m):>8}   '
+                f'{_pct(r1d):>8}  {_pct(r1w):>8}  {_pct(r1m):>8}   '
                 f'{arrow} {signal:<7}  {reason}'
             )
 
@@ -402,7 +395,7 @@ class MorningBrief:
         print(f'\n{_BRAND}Global markets{_RESET}  (local currency)\n')
         for label, ticker in self.indices.items():
             r = self._period_return(ticker, BRIEF_WINDOW_1D)
-            print(f'  {label:<26}  {self._arrow(r)}  {self._pct(r):>8}   {self._data_label(ticker)}')
+            print(f'  {label:<26}  {self._arrow(r)}  {_pct(r):>8}   {self._data_label(ticker)}')
 
     def _render_risk(self) -> None:
         risk = self._risk_snapshot()
@@ -456,7 +449,6 @@ def main() -> None:
         prev_prices=brief.previous_prices(),
     ))
     try:
-        import webbrowser
         webbrowser.open(out_path.as_uri())
     except Exception:
         print(f"\n  Dashboard → {out_path.as_uri()}\n")

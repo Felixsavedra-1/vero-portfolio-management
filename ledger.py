@@ -107,7 +107,7 @@ def load_transactions(path: Path) -> list[Transaction]:
     result = []
     for i, r in enumerate(raw):
         timestamp = r.get('timestamp') or r.get('date', '')
-        action    = (r['action'] if r.get('action') is not None else r.get('type', '')).lower()
+        action    = (r.get('action') or r.get('type', '')).lower()
         txn_id    = r.get('id') or f"txn_{timestamp[:10]}_{r.get('ticker', '')}_{i}"
         shares    = _coerce_float(r.get('shares'))
         price     = _coerce_float(r.get('price'))
@@ -116,9 +116,9 @@ def load_transactions(path: Path) -> list[Transaction]:
             timestamp=timestamp,
             action=action,
             ticker=r.get('ticker', ''),
-            shares=float(shares),
-            dollars=float(r.get('dollars', 0.0)),
-            price=float(price),
+            shares=shares,
+            dollars=_coerce_float(r.get('dollars')),
+            price=price,
             realized_pnl=r.get('realized_pnl'),
             notes=r.get('notes', ''),
         ))

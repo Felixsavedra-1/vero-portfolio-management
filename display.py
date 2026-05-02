@@ -37,7 +37,11 @@ def _div(width: int) -> str:
     return '─' * width
 
 
-def _has_price(ticker: str, prices: dict[str, float], h: Holding) -> bool:
+def _label(s: str, width: int = 22) -> str:
+    return s[:width - 3] + '...' if len(s) > width else s
+
+
+def _is_priceable(ticker: str, prices: dict[str, float], h: Holding) -> bool:
     return ticker in prices and math.isfinite(prices[ticker]) and h.shares > 0
 
 
@@ -53,7 +57,7 @@ def render_holdings(
     market_values: dict[str, float] = {
         ticker: h.shares * prices[ticker]
         for ticker, h in holdings.items()
-        if _has_price(ticker, prices, h)
+        if _is_priceable(ticker, prices, h)
     }
     total_value    = sum(market_values.values())
     total_invested = sum(h.cost for h in holdings.values())
@@ -69,7 +73,7 @@ def render_holdings(
     for ticker, h in holdings.items():
         if ticker not in market_values:
             lines.append(
-                f'  {ticker:<10} {h.label[:22]:<22} {"—":>9}  {"—":>9}  '
+                f'  {ticker:<10} {_label(h.label):<22} {"—":>9}  {"—":>9}  '
                 f'{_dollar(h.cost):>10}  {"n/a":>10}  {"n/a":>22}  {"—":>5}  {h.start_date}'
             )
             continue
@@ -80,7 +84,7 @@ def render_holdings(
         weight      = value / total_value if total_value else 0.0
 
         lines.append(
-            f'  {ticker:<10} {h.label[:22]:<22} {h.shares:>9.4f}  {h.avg_cost_per_share:>9.2f}  '
+            f'  {ticker:<10} {_label(h.label):<22} {h.shares:>9.4f}  {h.avg_cost_per_share:>9.2f}  '
             f'{_dollar(h.cost):>10}  {_dollar(value):>10}  '
             f'{_pnl_cell(gain_dollar, gain_pct):>22}  '
             f'{weight:>4.0%}  {h.start_date}'
@@ -163,9 +167,9 @@ def render_gains(
         lines.append(_div(_W_GAINS))
         for t, h in filtered_holdings.items():
             price = prices.get(t)
-            if not _has_price(t, prices, h):
+            if not _is_priceable(t, prices, h):
                 lines.append(
-                    f'  {t:<10} {h.label[:22]:<22} {"—":>9}  '
+                    f'  {t:<10} {_label(h.label):<22} {"—":>9}  '
                     f'{_dollar(h.cost):>10}  {"n/a":>10}  {"n/a":>22}'
                 )
                 total_cost += h.cost
@@ -177,7 +181,7 @@ def render_gains(
             total_value     += value
             total_unrealized += gain_dollar
             lines.append(
-                f'  {t:<10} {h.label[:22]:<22} {h.shares:>9.4f}  '
+                f'  {t:<10} {_label(h.label):<22} {h.shares:>9.4f}  '
                 f'{_dollar(h.cost):>10}  {_dollar(value):>10}  '
                 f'{_pnl_cell(gain_dollar, gain_pct):>22}'
             )
