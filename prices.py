@@ -102,6 +102,12 @@ def _last_close(series: pd.Series, label: str) -> float:
     return float(s.iloc[-1])
 
 
+def _close_series(data: pd.DataFrame) -> pd.Series:
+    """Extract a single-ticker Close series from a yfinance download."""
+    close = data['Close']
+    return close.iloc[:, 0] if isinstance(close, pd.DataFrame) else close
+
+
 def _close_frame(data: pd.DataFrame, tickers: list[str]) -> pd.DataFrame:
     """Normalize a yfinance download to a DataFrame with ticker-named columns."""
     if isinstance(data.columns, pd.MultiIndex):
@@ -120,11 +126,7 @@ def fetch_price(ticker: str) -> float:
             f"No price data for '{ticker}'. Check the symbol and your connection."
         )
 
-    close = data['Close']
-    if isinstance(close, pd.DataFrame):
-        close = close.iloc[:, 0]
-
-    return _last_close(close, f"'{ticker}'")
+    return _last_close(_close_series(data), f"'{ticker}'")
 
 
 def fetch_prices_batch(tickers: list[str]) -> dict[str, float]:
@@ -166,11 +168,7 @@ def fetch_historical_price(ticker: str, date_str: str) -> float:
             "Check the symbol and date, or pass --price manually."
         )
 
-    close = data['Close']
-    if isinstance(close, pd.DataFrame):
-        close = close.iloc[:, 0]
-
-    return _last_close(close, f"'{ticker}' around {date_str}")
+    return _last_close(_close_series(data), f"'{ticker}' around {date_str}")
 
 
 def fetch_label(ticker: str) -> str:

@@ -176,7 +176,10 @@ def load_savings(path: Path) -> list[SavingsAccount]:
 
 
 def save_savings(accounts: list[SavingsAccount], path: Path) -> None:
-    _atomic_write(path, [{'name': a.name, 'balance': a.balance, 'apy': a.apy, 'bank': a.bank} for a in accounts])
+    _atomic_write(path, [
+        {'name': a.name, 'balance': a.balance, 'apy': a.apy, 'bank': a.bank}
+        for a in accounts
+    ])
 
 
 def load_goals(path: Path) -> dict[str, float]:

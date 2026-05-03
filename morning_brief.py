@@ -30,15 +30,14 @@ from config import (
     RISK_FREE_RATE,
     RISK_MIN_OBSERVATIONS,
     SAVINGS_FILE,
-    TRANSACTIONS_FILE,
     WATCHLIST,
 )
 import dashboard as _dashboard
 from display import _pct
 from ledger import (
-    Holding, SavingsAccount, Transaction,
+    Holding, SavingsAccount,
     _payment_dates, accrued_interest, projected_next_payment,
-    load_holdings, load_savings, load_transactions,
+    load_holdings, load_savings,
 )
 from metrics import cost_basis_weights, momentum_signal, risk_snapshot as _compute_risk_snapshot
 from prices import yf_warnings
@@ -71,17 +70,15 @@ class MorningBrief:
         watchlist: dict[str, str] | None = None,
         mutual_funds: frozenset[str] | None = None,
         savings: list[SavingsAccount] | None = None,
-        transactions: list[Transaction] | None = None,
     ) -> None:
         self.holdings       = holdings
         self.indices        = indices
         self.benchmark      = benchmark
         self.risk_free_rate = risk_free_rate
-        self.watchlist:      dict[str, str]       = watchlist or {}
-        self.mutual_funds:   frozenset[str]       = mutual_funds or frozenset()
-        self._savings:       list[SavingsAccount] = savings or []
-        self._transactions:  list[Transaction]    = transactions or []
-        self._prices:        pd.DataFrame         = pd.DataFrame()
+        self.watchlist:    dict[str, str]       = watchlist or {}
+        self.mutual_funds: frozenset[str]       = mutual_funds or frozenset()
+        self._savings:     list[SavingsAccount] = savings or []
+        self._prices:      pd.DataFrame         = pd.DataFrame()
 
     def fetch(self) -> None:
         """
@@ -422,9 +419,8 @@ class MorningBrief:
 def main() -> None:
     logging.basicConfig(level=logging.WARNING)
 
-    holdings     = load_holdings(HOLDINGS_FILE)
-    savings      = load_savings(SAVINGS_FILE)
-    transactions = load_transactions(TRANSACTIONS_FILE)
+    holdings = load_holdings(HOLDINGS_FILE)
+    savings  = load_savings(SAVINGS_FILE)
 
     if not holdings:
         print("No holdings found. Run: python portfolio.py buy TICKER DOLLARS")
@@ -438,7 +434,6 @@ def main() -> None:
         watchlist=WATCHLIST,
         mutual_funds=MUTUAL_FUNDS,
         savings=savings,
-        transactions=transactions,
     )
     brief.fetch()
     brief.render()

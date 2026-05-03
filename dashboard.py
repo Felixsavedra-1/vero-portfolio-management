@@ -84,11 +84,12 @@ def _build_savings_data(savings_acc: list, today_d: date) -> tuple:
     rows = []
     savings_total = 0.0
     total_accrued = 0.0
+    if INTEREST_PAYMENT_DAY:
+        _, next_date = _payment_dates(INTEREST_PAYMENT_DAY, today_d)
+        days_until   = (next_date - today_d).days
     for acc in savings_acc:
         savings_total += acc.balance
         if INTEREST_PAYMENT_DAY:
-            _, next_date  = _payment_dates(INTEREST_PAYMENT_DAY, today_d)
-            days_until    = (next_date - today_d).days
             acc_interest  = accrued_interest(acc, INTEREST_PAYMENT_DAY, today_d)
             proj_payment  = projected_next_payment(acc, INTEREST_PAYMENT_DAY, today_d)
             daily_earn    = acc.balance * acc.apy / 365  # simple daily rate, not compound
