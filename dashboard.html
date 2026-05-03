@@ -8,15 +8,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:     #080808;
-  --border: #1a1a1a;
-  --text:   #b8b8b8;
-  --dim:    #686868;
-  --cream:  #f2e6cc;
-  --tan:    #c8b89a;
-  --gold:   #d4956a;
-  --orange: #FF8003;
-  --neg:    #c86030;
+  --bg:     #0a0a0a;
+  --border: #282828;
+  --text:   #d8d0c8;
+  --dim:    #787878;
+  --cream:  #e6e1dc;
+  --tan:    #d8d0c8;
+  --gold:   #8b4a3a;
+  --orange: #a03828;
+  --neg:    #6e2020;
   --font:   'Courier New', Courier, monospace;
 }
 
@@ -32,8 +32,8 @@ body::before {
   content: ''; position: fixed; inset: 0;
   pointer-events: none; z-index: 1;
   background:
-    linear-gradient(rgba(255,200,100,0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,200,100,0.012) 1px, transparent 1px);
+    linear-gradient(rgba(200,190,180,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,190,180,0.012) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -54,7 +54,7 @@ body::after {
   padding: 13px 28px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 20px rgba(255,128,3,0.06);
+  box-shadow: 0 1px 20px rgba(160,56,40,0.06);
   font-size: 14px;
 }
 
@@ -128,7 +128,7 @@ body::after {
   background: var(--bg);
   padding: 32px 32px 40px;
   display: flex; flex-direction: column; gap: 28px;
-  box-shadow: inset 0 0 28px rgba(255,128,3,0.03);
+  box-shadow: inset 0 0 28px rgba(160,56,40,0.03);
 }
 .panel--full { grid-column: 1 / -1; }
 
@@ -144,8 +144,8 @@ body::after {
   letter-spacing: 0.04em; font-weight: bold;
 }
 .panel-value--cyan {
-  color: #00d4ff;
-  text-shadow: 0 0 18px rgba(0,212,255,0.65), 0 0 40px rgba(0,212,255,0.2);
+  color: #585145;
+  text-shadow: 0 0 18px rgba(88,81,69,0.65), 0 0 40px rgba(88,81,69,0.2);
 }
 
 /* ── 3D chart container ─────────────────────────────────────────────────── */
@@ -175,13 +175,12 @@ body::after {
 .progress-fill {
   height: 100%; width: 0; border-radius: 4px;
   background: linear-gradient(90deg,
-    var(--cream)  0%,
-    var(--tan)   28%,
-    var(--gold)  58%,
-    var(--orange) 100%
+    #d8d0c8  0%,
+    #787878 45%,
+    #4C0701 100%
   );
-  box-shadow: 0 0 10px 1px rgba(255, 128, 3, 0.55),
-              0 0 4px  1px rgba(255, 200, 100, 0.3);
+  box-shadow: 0 0 10px 1px rgba(160, 56, 40, 0.55),
+              0 0 4px  1px rgba(200, 190, 180, 0.3);
   position: relative;
   overflow: hidden;
   animation: fill-bar 1.6s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -231,6 +230,21 @@ body::after {
 .dr-sub.pos { color: var(--tan); }
 .dr-sub.neg { color: var(--neg); }
 
+/* ── Label color picker ─────────────────────────────────────────────────── */
+.color-picker {
+  display: flex; gap: 3px; align-items: center; flex-shrink: 0;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.data-row:hover .color-picker { opacity: 1; pointer-events: auto; }
+.color-swatch {
+  width: 10px; height: 10px; border-radius: 50%; border: none;
+  cursor: pointer; padding: 0; background: transparent;
+  outline: 1px solid transparent; outline-offset: 1px;
+  transition: transform 0.1s, outline-color 0.1s;
+}
+.color-swatch:hover { transform: scale(1.5); }
+.color-swatch.active { outline-color: rgba(255,255,255,0.55); }
+
 /* ── Holding metrics bar ────────────────────────────────────────────────── */
 .holding-metrics {
   display: flex; gap: 18px; flex-wrap: wrap;
@@ -253,7 +267,7 @@ body::after {
   transition: color 0.15s, border-color 0.15s;
 }
 .wl-tf:hover  { color: var(--tan);    border-color: var(--tan); }
-.wl-tf.active { color: var(--orange); border-color: var(--orange); }
+.wl-tf.active { color: #4C0701; border-color: #4C0701; }
 
 .wl-row {
   display: grid;
@@ -270,7 +284,7 @@ body::after {
 .wl-signal         { font-size: 13px; letter-spacing: 0.10em; }
 .wl-signal.BULLISH { color: #00d56f; }
 .wl-signal.BEARISH { color: #d71200; }
-.wl-signal.NEUTRAL { color: var(--orange); }
+.wl-signal.NEUTRAL { color: #4C0701; }
 .wl-reason  { font-size: 12px; color: var(--dim); letter-spacing: 0.06em; margin-top: 3px; }
 .wl-sparkline  { display: block; width: 220px; height: 48px; }
 .hm-sparkline  { display: block; margin-left: auto; opacity: 0.82; }
@@ -285,7 +299,7 @@ body::after {
 #wl-tooltip {
   position: fixed;
   pointer-events: none;
-  background: #0d0b09;
+  background: #120d10;
   border: 1px solid var(--border);
   color: var(--text);
   font-family: var(--font);
@@ -295,7 +309,7 @@ body::after {
   border-radius: 2px;
   opacity: 0;
   transition: opacity 0.15s;
-  box-shadow: 0 0 14px rgba(255,128,3,0.18);
+  box-shadow: 0 0 14px rgba(160,56,40,0.18);
   z-index: 500;
   max-width: 320px;
   line-height: 1.55;
@@ -310,7 +324,7 @@ body::after {
 }
 #wl-tooltip .tt-desc { color: var(--dim); }
 .wl-name { cursor: pointer; }
-.wl-name.active-analysis { color: var(--orange); }
+.wl-name.active-analysis { color: #4C0701; }
 
 /* ── Analysis panel content ─────────────────────────────────────────────── */
 .an-empty  { font-size: 13px; color: var(--dim); letter-spacing: 0.10em; padding: 28px 0; text-align: center; }
@@ -439,8 +453,8 @@ const T       = D.totals || {};
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const SLICE_COLORS = [
-  '#c8b89a', '#d4956a', '#FF8003', '#a07848',
-  '#6b4c2a', '#e8c870', '#8B6914',
+  '#d8d0c8', '#a03828', '#8b4a3a', '#6e2020',
+  '#324155', '#3c2d46', '#0f2d23',
 ];
 
 function fmt$(v) {
@@ -473,7 +487,7 @@ function typeWriter(el, text, msPer, cb) {
 }
 
 // ── Arc Reactor ring chart ───────────────────────────────────────────────────
-function build3DRing(containerId, labels, values, totalValue) {
+function build3DRing(containerId, labels, values, totalValue, colors) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -511,7 +525,7 @@ function build3DRing(containerId, labels, values, totalValue) {
     if (val <= 0) return;
     const rawAng   = (val / total) * Math.PI * 2;
     const sliceAng = Math.max(rawAng - GAP, 0.01);
-    const hexColor = SLICE_COLORS[i % SLICE_COLORS.length];
+    const hexColor = (colors && colors[i]) || SLICE_COLORS[i % SLICE_COLORS.length];
     const color    = new THREE.Color(hexColor);
 
     const shape = new THREE.Shape();
@@ -548,7 +562,7 @@ function build3DRing(containerId, labels, values, totalValue) {
     shape.closePath();
     const geo = new THREE.ExtrudeGeometry(shape, { depth: B_DEPTH, bevelEnabled: false });
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x005577, emissive: 0x003344, emissiveIntensity: 0.5,
+      color: 0x5C5C5C, emissive: 0x2e2e2e, emissiveIntensity: 0.5,
       metalness: 0.9, roughness: 0.2,
     });
     groupB.add(new THREE.Mesh(geo, mat));
@@ -570,7 +584,7 @@ function build3DRing(containerId, labels, values, totalValue) {
     shape.closePath();
     const geo = new THREE.ExtrudeGeometry(shape, { depth: C_DEPTH, bevelEnabled: false });
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.7,
+      color: 0x4C0701, emissive: 0x4C0701, emissiveIntensity: 0.7,
       metalness: 0.6, roughness: 0.2,
     });
     groupC.add(new THREE.Mesh(geo, mat));
@@ -580,7 +594,7 @@ function build3DRing(containerId, labels, values, totalValue) {
 
   // ── Core glow sphere ──────────────────────────────────────────────────────
   const coreMat  = new THREE.MeshStandardMaterial({
-    color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 1.0,
+    color: 0x4C0701, emissive: 0x4C0701, emissiveIntensity: 1.0,
     metalness: 0.0, roughness: 0.0, transparent: true, opacity: 0.9,
   });
   const coreMesh = new THREE.Mesh(new THREE.SphereGeometry(0.20, 32, 32), coreMat);
@@ -588,17 +602,17 @@ function build3DRing(containerId, labels, values, totalValue) {
 
   // ── Lighting ──────────────────────────────────────────────────────────────
   scene.add(new THREE.AmbientLight(0x000a0f, 2.5));
-  const fL = new THREE.PointLight(0x00d4ff, 2.0, 18);
+  const fL = new THREE.PointLight(0x4C0701, 2.0, 18);
   fL.position.set(2, 3, 4);
   scene.add(fL);
-  const bL = new THREE.PointLight(0x0044aa, 1.2, 14);
+  const bL = new THREE.PointLight(0x5C5C5C, 1.2, 14);
   bL.position.set(-2, -2, 2);
   scene.add(bL);
   const rL = new THREE.DirectionalLight(0xaaddff, 0.25);
   rL.position.set(0, 5, 5);
   scene.add(rL);
 
-  const hoverLight = new THREE.PointLight(0x00d4ff, 0, 8);
+  const hoverLight = new THREE.PointLight(0x4C0701, 0, 8);
   scene.add(hoverLight);
 
   // ── Particle system ───────────────────────────────────────────────────────
@@ -611,7 +625,7 @@ function build3DRing(containerId, labels, values, totalValue) {
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
 
   const pMat = new THREE.PointsMaterial({
-    color: 0x00d4ff, size: 0.06,
+    color: 0x4C0701, size: 0.06,
     transparent: true, opacity: 0,
     blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
   });
@@ -650,9 +664,9 @@ function build3DRing(containerId, labels, values, totalValue) {
 
   const tip = document.createElement('div');
   tip.style.cssText = "position:absolute;pointer-events:none;background:#050c10;" +
-    "border:1px solid #004455;color:#b8b8b8;font-family:'Courier New',monospace;" +
+    "border:1px solid #004455;color:#d8d0c8;font-family:'Courier New',monospace;" +
     "font-size:12px;letter-spacing:0.08em;padding:7px 12px;border-radius:2px;" +
-    "opacity:0;transition:opacity 0.15s;box-shadow:0 0 10px rgba(0,212,255,0.2);" +
+    "opacity:0;transition:opacity 0.15s;box-shadow:0 0 10px rgba(76,7,1,0.2);" +
     "z-index:10;white-space:nowrap;";
   container.appendChild(tip);
 
@@ -734,6 +748,7 @@ function build3DRing(containerId, labels, values, totalValue) {
 
     renderer.render(scene, camera);
   })();
+  return meshesA;
 }
 
 // ── Progress bar ────────────────────────────────────────────────────────────
@@ -762,6 +777,21 @@ function renderProgressBar(containerId, current, goal, type) {
     </div>`;
 }
 
+// ── Label color palette (user-selectable, 1–6) ───────────────────────────────
+const LABEL_COLORS = [
+  '#d8d0c8', // 1 Bone White
+  '#a03828', // 2 Oxide Red
+  '#8b4a3a', // 3 Muted Burgundy
+  '#324155', // 4 Cold Blue Steel
+  '#3c2d46', // 5 Dusty Purple
+  '#0f2d23', // 6 Deep Forest
+];
+function swatchesHtml(activeColor) {
+  return `<div class="color-picker">${LABEL_COLORS.map(c =>
+    `<button class="color-swatch${c === activeColor ? ' active' : ''}" data-color="${c}" style="background:${c}"></button>`
+  ).join('')}</div>`;
+}
+
 // ── Holdings table ───────────────────────────────────────────────────────────
 function renderHoldings() {
   const el       = document.getElementById('holdings-list');
@@ -777,10 +807,11 @@ function renderHoldings() {
     const gainArrow  = h.gain_pct > 0 ? '▲'  : h.gain_pct < 0 ? '▼'  : '—';
     const dayCls     = h.day_change_pct > 0 ? 'hm-pos' : h.day_change_pct < 0 ? 'hm-neg' : 'hm-val';
     const gainHmCls  = h.gain_dollar > 0    ? 'hm-pos' : h.gain_dollar < 0    ? 'hm-neg' : 'hm-val';
-    const color      = SLICE_COLORS[i % SLICE_COLORS.length];
+    const color      = localStorage.getItem('color_h_' + h.ticker) || SLICE_COLORS[i % SLICE_COLORS.length];
     return `
-      <div class="data-row" style="border-bottom:none;padding-bottom:6px">
+      <div class="data-row" data-key="h_${h.ticker}" style="border-bottom:none;padding-bottom:6px">
         <span class="dr-left" style="color:${color}">${escapeHTML(h.ticker)}<span class="dr-sub">${fmtPrice(h.price)}</span></span>
+        ${swatchesHtml(color)}
         <span class="dr-mid">${escapeHTML(shortLabel)}</span>
         <span class="dr-right">
           ${fmt$(h.value)}
@@ -805,7 +836,7 @@ function renderSavings() {
   }
   const pd = T.payment_day;
   el.innerHTML = savings.map((s, i) => {
-    const color      = SLICE_COLORS[i % SLICE_COLORS.length];
+    const color      = localStorage.getItem('color_s_' + s.name) || SLICE_COLORS[i % SLICE_COLORS.length];
     const metricsBar = (pd && s.accrued != null) ? `
     <div class="holding-metrics">
       <div class="hm-seg"><span class="hm-label">Daily</span><span class="hm-pos">+${fmtPrice(s.daily_earn)}/d</span></div>
@@ -813,8 +844,9 @@ function renderSavings() {
       <div class="hm-seg"><span class="hm-label">Next</span><span class="hm-pos">+${fmtPrice(s.projected_payment)}</span><span class="hm-label"> in ${s.days_until_payment}d</span></div>
     </div>` : '';
     return `
-    <div class="data-row" style="border-bottom:${metricsBar ? 'none' : ''}">
+    <div class="data-row" data-key="s_${s.name}" style="border-bottom:${metricsBar ? 'none' : ''}">
       <span class="dr-left" style="color:${color}">${escapeHTML(s.name)}</span>
+      ${swatchesHtml(color)}
       <span class="dr-mid">${escapeHTML(s.bank || '')}</span>
       <span class="dr-right">
         ${fmt$(s.balance)}
@@ -895,13 +927,12 @@ function drawSparkline(canvas, prices, w, h) {
 
   function makeGrads() {
     const lg = ctx.createLinearGradient(0, 0, W, 0);
-    lg.addColorStop(0,    '#f2e6cc');
-    lg.addColorStop(0.28, '#c8b89a');
-    lg.addColorStop(0.58, '#d4956a');
-    lg.addColorStop(1,    '#FF8003');
+    lg.addColorStop(0,    '#d8d0c8');
+    lg.addColorStop(0.45, '#787878');
+    lg.addColorStop(1,    '#4C0701');
     const fg = ctx.createLinearGradient(0, 0, 0, H);
-    fg.addColorStop(0, 'rgba(255,128,3,0.18)');
-    fg.addColorStop(1, 'rgba(255,128,3,0)');
+    fg.addColorStop(0, 'rgba(76,7,1,0.30)');
+    fg.addColorStop(1, 'rgba(76,7,1,0)');
     return { lg, fg };
   }
 
@@ -915,7 +946,7 @@ function drawSparkline(canvas, prices, w, h) {
     ctx.lineTo(xp(c - 1), H); ctx.lineTo(xp(0), H); ctx.closePath();
     ctx.fillStyle = fg; ctx.fill();
     ctx.save();
-    ctx.shadowBlur = 7; ctx.shadowColor = 'rgba(255,128,3,0.75)';
+    ctx.shadowBlur = 7; ctx.shadowColor = 'rgba(76,7,1,0.85)';
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(prices[0]));
     for (let i = 1; i < c; i++) ctx.lineTo(xp(i), yp(prices[i]));
@@ -1036,17 +1067,17 @@ function _attachChartTooltip(wrap, prices, W) {
     tip = document.createElement('div');
     tip.className = 'an-tip';
     tip.style.cssText = 'position:absolute;pointer-events:none;background:#050c10;' +
-      'border:1px solid #00d4ff;color:#00d4ff;font-family:"Courier New",monospace;' +
+      'border:1px solid #d8d0c8;color:#d8d0c8;font-family:"Courier New",monospace;' +
       'font-size:11px;letter-spacing:0.08em;padding:5px 10px;border-radius:2px;' +
       'opacity:0;transition:opacity 0.1s;white-space:nowrap;z-index:20;' +
-      'box-shadow:0 0 10px rgba(0,212,255,0.25);text-shadow:0 0 8px rgba(0,212,255,0.5);';
+      'box-shadow:0 0 10px rgba(216,208,200,0.15);text-shadow:0 0 8px rgba(216,208,200,0.3);';
     wrap.appendChild(tip);
   }
   if (!hair) {
     hair = document.createElement('div');
     hair.className = 'an-hair';
     hair.style.cssText = 'position:absolute;top:5px;bottom:5px;width:1px;pointer-events:none;' +
-      'background:rgba(0,212,255,0.35);box-shadow:0 0 6px rgba(0,212,255,0.4);' +
+      'background:rgba(216,208,200,0.35);box-shadow:0 0 6px rgba(216,208,200,0.25);' +
       'opacity:0;transition:opacity 0.1s;z-index:19;';
     wrap.appendChild(hair);
   }
@@ -1179,22 +1210,27 @@ function clearAnalysisPanel() {
   })();
 
   // Defer 3D init by one frame so layout dimensions are committed
+  let holdingMeshes = [], savingsMeshes = [];
   requestAnimationFrame(() => {
     const holdings = D.holdings || [];
-    build3DRing(
+    const hColors  = holdings.map((h, i) => localStorage.getItem('color_h_' + h.ticker) || SLICE_COLORS[i % SLICE_COLORS.length]);
+    holdingMeshes  = build3DRing(
       'chart-portfolio',
       holdings.length ? holdings.map(h => h.ticker) : ['—'],
       holdings.length ? holdings.map(h => h.value)  : [1],
       T.portfolio_value || 0,
-    );
+      hColors,
+    ) || [];
 
-    const savings = D.savings || [];
-    build3DRing(
+    const savings  = D.savings || [];
+    const sColors  = savings.map((s, i) => localStorage.getItem('color_s_' + s.name) || SLICE_COLORS[i % SLICE_COLORS.length]);
+    savingsMeshes  = build3DRing(
       'chart-savings',
       savings.length ? savings.map(s => s.name)    : ['—'],
       savings.length ? savings.map(s => s.balance) : [1],
       T.savings_total || 0,
-    );
+      sColors,
+    ) || [];
   });
 
   renderProgressBar('prog-portfolio', T.portfolio_value || 0, T.portfolio_goal || null, 'portfolio');
@@ -1212,6 +1248,39 @@ function clearAnalysisPanel() {
   renderHoldings();
   renderSavings();
   renderWatchlist();
+
+  // ── Label color picker clicks ────────────────────────────────────────────
+  ['holdings-list', 'savings-list'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      const sw = e.target.closest('.color-swatch');
+      if (!sw) return;
+      const row = sw.closest('[data-key]');
+      if (!row) return;
+      const key   = row.dataset.key;
+      const color = sw.dataset.color;
+      localStorage.setItem('color_' + key, color);
+      row.querySelector('.dr-left').style.color = color;
+      row.querySelectorAll('.color-swatch').forEach(s =>
+        s.classList.toggle('active', s.dataset.color === color)
+      );
+      // Update the corresponding 3D ring slice
+      if (key.startsWith('h_')) {
+        const ticker = key.slice(2);
+        const idx = (D.holdings || []).findIndex(h => h.ticker === ticker);
+        if (idx >= 0 && holdingMeshes[idx]) {
+          holdingMeshes[idx].material.color.set(color);
+          holdingMeshes[idx].material.emissive.set(color);
+        }
+      } else if (key.startsWith('s_')) {
+        const name = key.slice(2);
+        const idx = (D.savings || []).findIndex(s => s.name === name);
+        if (idx >= 0 && savingsMeshes[idx]) {
+          savingsMeshes[idx].material.color.set(color);
+          savingsMeshes[idx].material.emissive.set(color);
+        }
+      }
+    });
+  });
   clearAnalysisPanel();
 
   // ── Watchlist company click → analysis ──────────────────────────────────
