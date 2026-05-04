@@ -12,8 +12,6 @@ Terminal portfolio tracker. Trades, P&L, daily brief, interactive dashboard — 
 
 Every consumer brokerage app shows you the same thing: balance, day change, a chart. None of them show **alpha vs. a benchmark, Sharpe with a confidence interval, max drawdown, or accrued interest on idle cash**. Vero is the dashboard I wanted as an operator: one command in the morning, the numbers that actually matter, no login, no tracking, no SaaS.
 
-It's also a deliberate exercise in clean architecture — pure formatting layer, single network surface, atomic writes, dataclasses, network-free tests. ~3,800 LoC, no framework.
-
 ---
 
 ## Architecture
@@ -32,10 +30,6 @@ It's also a deliberate exercise in clean architecture — pure formatting layer,
         │ + JSON  │ │ format   │ │ DD, etc. │ │ (only here) │
         └─────────┘ └──────────┘ └──────────┘ └─────────────┘
 ```
-
-`prices.py` is the only module that touches the network. `display.py` is pure (no I/O, no globals). `ledger.py` does atomic `.tmp → rename` writes. Tests are network-free by design.
-
-> Full architecture notes, data model, and design rationale: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -101,23 +95,6 @@ Portfolio
   Portfolio    —       —    +$757.05   +1.05%   +1.55%  +10.90%   +25.60%
   S&P 500      —       —           —   +0.30%   +0.80%   +3.10%    +8.40%
   Alpha        —       —           —   +0.75%   +0.75%   +7.80%   +17.20%
-
-Watchlist
-
-  Company              Ticker    Price       1D        1W        1M   Signal
-  ────────────────────────────────────────────────────────────────────────────
-  American Express     AXP    $242.10   +1.23%   +3.10%  +18.50%   ▲ BULLISH   strong momentum
-  JPMorgan             JPM    $248.30   +0.15%   +0.40%   +1.20%   ~ NEUTRAL   mixed signals
-  Apple                AAPL   $199.50   +0.45%   -1.10%   +4.20%   ▲ BULLISH   dip in uptrend
-  Nvidia               NVDA   $118.20   +1.85%   +3.20%  +18.50%   ▲ BULLISH   strong momentum
-  Tesla                TSLA   $248.90   -2.14%   -6.30%  -12.40%   ▼ BEARISH   downtrend
-  Oklo                 OKLO    $42.80   +3.20%   +8.10%  +22.30%   ▲ BULLISH   strong momentum
-
-Global markets  (local currency)
-
-  S&P 500    (US)              ▲    +0.30%   today
-  FTSE 100   (UK)              ▼    -0.12%   today
-  Nikkei 225 (Japan)           ▲    +0.85%   today
 
 Risk snapshot  (trailing 1 year)
 
@@ -210,5 +187,3 @@ pytest tests/
 All tests are network-free.
 
 ---
-
-<img src="company.JPG" width="120" alt="Vero logo" />
